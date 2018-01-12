@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/first"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/gid"
+            style="?android:attr/textAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ck030811ff"
+            android:maxLines="1"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <EditText
+            android:id="@+id/account"
+            style="?android:attr/textAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="admin"
+            android:maxLines="1"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <EditText
+            android:id="@+id/password"
+            style="?android:attr/textAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="123456"
+            android:maxLines="1"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/add"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="add"
+            android:onClick="clickAddGid" />
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            android:id="@+id/download_config_file"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="连接"
+            android:onClick="clickConnect" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_below="@id/first"
+        android:id="@+id/gl_view_container"
+        android:layout_width="350dp"
+        android:layout_height="350dp"/>
+
+</RelativeLayout>

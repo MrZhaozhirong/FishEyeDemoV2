@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/first"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/gid"
+            style="?android:attr/textAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="v3027ee621"
+            android:maxLines="1"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <EditText
+            android:id="@+id/account"
+            style="?android:attr/textAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="admin"
+            android:maxLines="1"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <EditText
+            android:id="@+id/password"
+            style="?android:attr/textAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="admin"
+            android:maxLines="1"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/add"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="add"
+            android:onClick="clickAddGid" />
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            android:id="@+id/download_config_file"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="连接"
+            android:onClick="clickConnect" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/second"
+        android:layout_below="@id/first"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/fish_eye_360"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="360"
+            android:onClick="clickFishEye360" />
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/four_fish_eye_360"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:text="四分屏"
+            android:onClick="clickFour360"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/two_rectangle"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="矩形"
+            android:onClick="clickTwoRectangle"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/cylinder"
+            android:layout_width="90dp"
+            android:layout_height="wrap_content"
+            android:text="圆柱形"
+            android:onClick="clickCylinder"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_below="@id/second"
+        android:id="@+id/gl_view_container"
+        android:layout_width="350dp"
+        android:layout_height="350dp"/>
+
+</RelativeLayout>

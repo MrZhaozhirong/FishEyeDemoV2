@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/fuck"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_720"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="720"/>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_360"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="360"/>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_180"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="180"/>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_h264"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="h264"/>
+    </LinearLayout>
+
+
+</LinearLayout>
