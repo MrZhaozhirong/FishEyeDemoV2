@@ -513,7 +513,7 @@ public class FishEye360 {
 
     private boolean transformToEndoscope() {
         boolean viewTransforming = true;
-        if (eye.cz < -0.002f) {
+        if (eye.cz < -1.000f) {
             Matrix.setLookAtM(mViewMatrix, 0,
                     eye.cx, eye.cy, eye.cz += 0.002f,
                     eye.tx, eye.ty, eye.tz,

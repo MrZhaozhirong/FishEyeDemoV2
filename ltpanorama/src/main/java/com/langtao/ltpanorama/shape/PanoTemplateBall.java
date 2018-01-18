@@ -77,6 +77,7 @@ public class PanoTemplateBall {
             FileInputStream fis = new FileInputStream(new File(templateFileName));
             byte[] dataArray = new byte[fis.available()];
             Log.d(TAG, "DEBUG: templateFile length "+dataArray.length);
+            Log.d(TAG, "DEBUG: m_templateParam.width*height = "+m_templateParam.width+" x "+m_templateParam.height);
             Log.d(TAG, "DEBUG: m_templateParam width*height*4 length "+ m_templateParam.width * m_templateParam.height * 4);
             Log.d(TAG, "DEBUG: m_templateParam width*height*4*2 length "+ m_templateParam.width * m_templateParam.height * 4 * 2);
             if(dataArray.length < m_templateParam.width * m_templateParam.height*4*2) {
