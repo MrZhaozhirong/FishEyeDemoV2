@@ -48,11 +48,7 @@ public class PanoTemplateRectangleFBO {
     private int m_WeightTextureID = 0;
     private boolean m_templateIsOK = false;
 
-    public PanoTemplateRectangleFBO( ){
-        // 获取模板参数
-        m_templateParam = PanoTemplateProc.getPanoTemplateSize();
-        createBufferData();
-    }
+    public PanoTemplateRectangleFBO( ){ }
 
     private void createBufferData() {
         if(out == null){
@@ -95,6 +91,45 @@ public class PanoTemplateRectangleFBO {
         }
         return false;
     }
+
+    //private boolean initTemplateConfigFile(String key, String templateFileName) {
+    //    ByteBuffer dataBuffer = null;
+    //    try
+    //    {
+    //        File configFile = new File(templateFileName);
+    //        if(!configFile.exists()) {
+    //            return false;
+    //        }
+    //        FileInputStream fis = new FileInputStream(new File(templateFileName));
+    //        byte[] dataArray = new byte[fis.available()];
+
+    //        m_templateParam = PanoTemplateProc.decryptTemplate(dataArray, key);
+    //        if (m_templateParam == null) {
+    //            return false;
+    //        }
+
+    //        Log.d(TAG, "DEBUG: templateFile length "+m_templateParam.panoTem.length);
+    //        Log.d(TAG, "DEBUG: m_templateParam.width*height = "+m_templateParam.width+" x "+m_templateParam.height);
+    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4 length "+ m_templateParam.width * m_templateParam.height * 4);
+    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4*2 length "+ m_templateParam.width * m_templateParam.height * 4 * 2);
+    //        if(m_templateParam.panoTem.length < m_templateParam.width * m_templateParam.height*4*2) {
+    //            throw new IllegalArgumentException("Error: Panorama Template Config File Wrong !!!");
+    //        }
+
+    //        dataBuffer = ByteBuffer.allocateDirect(m_templateParam.panoTem.length )
+    //                .order(ByteOrder.nativeOrder());
+    //        dataBuffer.put(m_templateParam.panoTem);
+    //        dataBuffer.clear();
+    //        loadTemplateTexture(dataBuffer);
+    //        return true;
+    //    }catch (Exception ex){
+    //        ex.printStackTrace();
+    //    }
+    //    return false;
+    //}
+
+
+
 
     private void loadTemplateTexture(ByteBuffer dataBuffer) {
         if(dataBuffer == null) return;
@@ -297,14 +332,28 @@ public class PanoTemplateRectangleFBO {
     }
 
     public volatile boolean isInitialized = false;
+
     public void onEGLSurfaceCreated(String templateFileName) {
+        // 获取模板参数
+        m_templateParam = PanoTemplateProc.getPanoTemplateSize();
         if( initTemplateConfigFile(templateFileName) ){
+            createBufferData();
             buildProgram();
             //initTexture(frame);
             //setAttributeStatus();
             isInitialized = true;
         }
     }
+
+    //public void onEGLSurfaceCreated(String secretKeyString, String templateFileName) {
+    //    if( initTemplateConfigFile(secretKeyString, templateFileName) ){
+    //        createBufferData();
+    //        buildProgram();
+    //        //initTexture(frame);
+    //        //setAttributeStatus();
+    //        isInitialized = true;
+    //    }
+    //}
     /////////// interface 截图对外接口 //////////////////////////////////
     private volatile boolean requestScreenShot = false;
     private ScreenShotReadyCallback screenShotReadyCallback;

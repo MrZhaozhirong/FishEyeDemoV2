@@ -27,8 +27,8 @@ public class LangTao720RenderMgr extends LTRenderManager {
         RENDER_MODE = LTRenderMode.RENDER_MODE_CRYSTAL;
     }
 
-    // 设置 全景模板配置文件接口
-    private String panoTemplateConfigFileName_AbsolutePath;
+    // 设置 全景模板配置文件 绝对路径
+    private String panoTemplateConfigFileName_AbsolutePath = null;
 
     public void setPanoTemConfigFile(String absolutePath_fileName) {
         this.panoTemplateConfigFileName_AbsolutePath = absolutePath_fileName;
@@ -39,6 +39,19 @@ public class LangTao720RenderMgr extends LTRenderManager {
             Log.e(TAG, "Error: It will throw Exceptions in init LangTao-GL !!!");
         }
     }
+
+    // 设置 全景模板解密密钥
+    private String panoTemplateConfigFile_SecretKey = null;
+
+    public void setPanoTemSecretKey(String secretKeyString) {
+        this.panoTemplateConfigFile_SecretKey = secretKeyString;
+        if(panoTemplateConfigFile_SecretKey==null ||
+                "".equalsIgnoreCase(panoTemplateConfigFile_SecretKey) ) {
+            Log.e(TAG, "Error: setPanoTemSecretKey is null, invalid !!!");
+            Log.e(TAG, "Error: It will throw Exceptions in init LangTao-GL !!!");
+        }
+    }
+
 
     // 设置 申请2:1全景图回调
     private volatile boolean requestScreenShot = false;
@@ -94,10 +107,10 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 YUVFrame buffer = mCircularBuffer.getFrame();
                 if(buffer != null){
                     if(!templateBall.isInitialized) {
-                        templateBall.onSurfaceCreated(panoTemplateConfigFileName_AbsolutePath);
+                        templateBall.onSurfaceCreated(
+                                panoTemplateConfigFileName_AbsolutePath);
                     }
                     templateBall.updateTexture(buffer);
-                    Log.v(TAG, "LangTao720RenderMgr onDrawFrame updateTexture ");
                 }
                 templateBall.updateBallMatrix();
                 templateBall.draw();
@@ -105,7 +118,8 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 //2:1全景图相关
                 if(requestScreenShot ) {
                     if(!panoTmRender.isInitialized ){
-                        panoTmRender.onEGLSurfaceCreated(panoTemplateConfigFileName_AbsolutePath);
+                        panoTmRender.onEGLSurfaceCreated(
+                                panoTemplateConfigFileName_AbsolutePath);
                     }
                     if(buffer!=null ){
                         panoTmRender.initFBO(buffer.getWidth(), buffer.getHeight());
@@ -211,6 +225,17 @@ public class LangTao720RenderMgr extends LTRenderManager {
         }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
             if(picBall!=null)
                 RENDER_MODE = picBall.nextControlMode();
+        }
+        return RENDER_MODE;
+    }
+    // 水晶球<-鱼眼
+    public int fishEyeReturnToCrystal() {
+        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
+            if(templateBall!=null)
+                RENDER_MODE = templateBall.fishEyeReturnToCrystal();
+        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
+            if(picBall!=null)
+                RENDER_MODE = picBall.fishEyeReturnToCrystal();
         }
         return RENDER_MODE;
     }

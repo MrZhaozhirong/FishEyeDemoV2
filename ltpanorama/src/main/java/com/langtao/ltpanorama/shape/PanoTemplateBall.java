@@ -21,8 +21,6 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import static com.langtao.ltpanorama.utils.MatrixHelper.beEqualTo;
-
 
 /**
  * Created by zzr on 2017/12/4.
@@ -63,7 +61,41 @@ public class PanoTemplateBall {
     }
 
 
+    //private boolean initTemplateConfigFile(String key, String templateFileName) {
+    //    ByteBuffer dataBuffer = null;
+    //    try
+    //    {
+    //        File configFile = new File(templateFileName);
+    //        if(!configFile.exists()) {
+    //            return false;
+    //        }
+    //        FileInputStream fis = new FileInputStream(new File(templateFileName));
+    //        byte[] dataArray = new byte[fis.available()];
 
+    //        m_templateParam = PanoTemplateProc.decryptTemplate(dataArray, key);
+    //        if (m_templateParam == null) {
+    //            return false;
+    //        }
+
+    //        Log.d(TAG, "DEBUG: templateFile length "+m_templateParam.panoTem.length);
+    //        Log.d(TAG, "DEBUG: m_templateParam.width*height = "+m_templateParam.width+" x "+m_templateParam.height);
+    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4 length "+ m_templateParam.width * m_templateParam.height * 4);
+    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4*2 length "+ m_templateParam.width * m_templateParam.height * 4 * 2);
+    //        if(m_templateParam.panoTem.length < m_templateParam.width * m_templateParam.height*4*2) {
+    //            throw new IllegalArgumentException("Error: Panorama Template Config File Wrong !!!");
+    //        }
+
+    //        dataBuffer = ByteBuffer.allocateDirect(m_templateParam.panoTem.length )
+    //                .order(ByteOrder.nativeOrder());
+    //        dataBuffer.put(m_templateParam.panoTem);
+    //        dataBuffer.clear();
+    //        loadTemplateTexture(dataBuffer);
+    //        return true;
+    //    }catch (Exception ex){
+    //        ex.printStackTrace();
+    //    }
+    //    return false;
+    //}
 
 
     private boolean initTemplateConfigFile(String templateFileName) {
@@ -96,27 +128,6 @@ public class PanoTemplateBall {
         return false;
     }
 
-    //private boolean initTemplateTexture() {
-    //    ByteBuffer dataBuffer = null;
-    //    try{
-    //        InputStream is = context.getResources().openRawResource(R.raw.pano_tem_file);
-    //        if (is.available() != m_templateParam.dataSize) {
-    //            return  false;
-    //        }
-    //        byte[] dataArray = new byte[is.available()];
-    //        is.read(dataArray);
-    //        //读出原始数据
-    //        dataBuffer = ByteBuffer.allocateDirect(dataArray.length)
-    //                .order(ByteOrder.nativeOrder());
-    //        dataBuffer.put(dataArray);
-    //        dataBuffer.clear();
-    //    }catch (Exception ex){
-    //        ex.printStackTrace();
-    //        return false;
-    //    }
-    //    loadTemplateTexture(dataBuffer);
-    //    return true;
-    //}
 
     private void loadTemplateTexture(ByteBuffer dataBuffer) {
         if(dataBuffer == null) return;
@@ -272,16 +283,35 @@ public class PanoTemplateBall {
     private int initFrameHeight;
     public volatile boolean isInitialized = false;
 
+    // 模板加密了
+    //public void onSurfaceCreated(String secretKeyString, String templateFileName) {
+    //    if( (templateFileName==null || "".equalsIgnoreCase(templateFileName) )
+    //        &&
+    //        (secretKeyString==null || "".equalsIgnoreCase(secretKeyString) )
+    //            ) {
+    //        Log.e(TAG, "Error: setPanoTemplateConfigFile param invalid !!!");
+    //        Log.e(TAG, "Error: It will error show Panorama in LangTao-GL !!!");
+    //        throw new IllegalArgumentException("Error: Panorama Template Config File is null or File not exists !!!");
+    //    }else {
+    //        if( initTemplateConfigFile(secretKeyString, templateFileName) ){
+    //            createBufferData();
+    //            buildProgram();
+    //            //initTexture(frame);
+    //            setAttributeStatus();
+    //            this.isInitialized = true;
+    //        }
+    //    }
+    //}
+
+    // 模板没加密
     public void onSurfaceCreated(String templateFileName) {
         // 获取模板参数
         m_templateParam = PanoTemplateProc.getPanoTemplateSize();
-
         if(templateFileName==null ||
                 "".equalsIgnoreCase(templateFileName) ||
                 !new File(templateFileName).exists() ) {
             Log.e(TAG, "Error: setPanoTemplateConfigFile is null or File not exists !!!");
             Log.e(TAG, "Error: It will error show Panorama in LangTao-GL !!!");
-            //initTemplateTexture();
             throw new IllegalArgumentException("Error: Panorama Template Config File is null or File not exists !!!");
         }else {
             if( initTemplateConfigFile(templateFileName) ){
@@ -455,7 +485,12 @@ public class PanoTemplateBall {
         }
     }
 
+
+
     public int nextControlMode() {
+        if(updateingBallControlMode)
+            return targetControlMode;
+
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
             tartgetEye.setCameraVector(0, 0, -1.0f);
@@ -496,11 +531,38 @@ public class PanoTemplateBall {
     public void updateBallControlMode() {
         if(currentControlMode != targetControlMode){
             updateingBallControlMode = true;
+            // 2018 01 26 新增鱼眼双击还原到水晶球
+            if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE &&
+                    targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
+                if( Math.abs(currentOverture-targetOverture) > 0.1f){
+                    float diff = Math.abs(targetOverture - currentOverture) / 15f; //1.0f;
+                    if(currentOverture < targetOverture)
+                        currentOverture += diff;
+                    else
+                        currentOverture-=diff;
+                }else{
+                    currentOverture = CRYSTAL_OVERTURE;
+                }
+
+                if(!currentEye.equals(tartgetEye)){
+                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                    currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
+                }else{
+                    currentEye.setCameraVector(0, 0, -2.0f);
+                }
+
+                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
+                        && currentEye.equals(tartgetEye)){
+                    //切换完成
+                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+                    this.zoomTimes = 0;
+                }
+            }
             //从水晶球切换成 鱼眼
             if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL &&
                     targetControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
 
-                if(!beEqualTo(currentOverture,targetOverture)){
+                if(!MatrixHelper.beEqualTo(currentOverture,targetOverture)){
                     currentOverture += (ASTEROID_MIN_OVERTURE - CRYSTAL_OVERTURE) / 20f; //1.0f;
                 }else{
                     currentOverture = ASTEROID_MIN_OVERTURE;
@@ -508,11 +570,13 @@ public class PanoTemplateBall {
                 if(!currentEye.equals(tartgetEye)){
                     float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz+=diff);
+                    if(currentEye.cz > -1.0f)
+                        currentEye.setCameraVector(0, 0, -1.0f);
                 }else{
                     currentEye.setCameraVector(0, 0, -1.0f);
                 }
 
-                if(beEqualTo(currentOverture,targetOverture)
+                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
                         && currentEye.equals(tartgetEye)){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
@@ -522,7 +586,7 @@ public class PanoTemplateBall {
             if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE &&
                     targetControlMode == LTRenderMode.RENDER_MODE_PLANET){
 
-                if(!beEqualTo(currentOverture,targetOverture)){
+                if(!MatrixHelper.beEqualTo(currentOverture,targetOverture)){
                     currentOverture += (ASTEROID_MAX_OVERTURE-ASTEROID_MIN_OVERTURE) / 35f; //2.0f;
                 }else{
                     currentOverture = ASTEROID_MAX_OVERTURE;
@@ -553,9 +617,9 @@ public class PanoTemplateBall {
                 }
 
                 this.mfingerRotationY += (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
-                if(beEqualTo(currentOverture,targetOverture)
+                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
                         && currentEye.equals(tartgetEye)
-                        && beEqualTo(Math.abs(this.mfingerRotationX),90.0f) ){
+                        && MatrixHelper.beEqualTo(Math.abs(this.mfingerRotationX),90.0f) ){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
                 }
@@ -593,9 +657,9 @@ public class PanoTemplateBall {
                 }
 
                 this.mfingerRotationY += this.mfingerRotationX*0.25f;
-                if(beEqualTo(currentOverture,targetOverture)
+                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
                         && currentEye.equals(tartgetEye)
-                        && beEqualTo(Math.abs(this.mfingerRotationX), 0.0f)  ){
+                        && MatrixHelper.beEqualTo(Math.abs(this.mfingerRotationX), 0.0f)  ){
                     currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;//切换完成
                     this.zoomTimes = 0;
                 }
@@ -858,6 +922,31 @@ public class PanoTemplateBall {
         }
     }
 
+
+    /**
+     * 双击操作
+     */
+    public void handleDoubleClick() {
+
+    }
+
+    // 特殊处理  从鱼眼双击还原到水晶球
+    public int fishEyeReturnToCrystal() {
+        // fishEye -> crystal
+        if(updateingBallControlMode)
+            return targetControlMode;
+        if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
+            targetOverture = CRYSTAL_OVERTURE;
+            tartgetEye.setCameraVector(0, 0, -2.0f);
+            //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
+            //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
+            targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+        }
+        return targetControlMode;
+    }
+
+
+
     /**
      * 双手操作
      * @param distance
@@ -939,14 +1028,18 @@ public class PanoTemplateBall {
         }
         //在原本的基础上添加增值，不需要置零
         Matrix.translateM(this.mViewMatrix,0, 0f,0f,-scale);
-        currentEye.setCameraVector(currentEye.cx, currentEye.cy, this.mViewMatrix[14]);
+        if(this.mViewMatrix[14] < -1.0f) {
+            currentEye.setCameraVector(currentEye.cx, currentEye.cy, this.mViewMatrix[14]);
+        } else {
+            currentEye.setCameraVector(currentEye.cx, currentEye.cy, -1.0f);
+        }
+
 
         Log.w(TAG, "currentOverture : "+currentOverture);
         Log.w(TAG, "current mViewMatrix: " + "\n" +
                 currentEye.cx + " " +  currentEye.cy + " " +  currentEye.cz + "\n" +
                 currentEye.tx + " " +  currentEye.ty + " " +  currentEye.tz + "\n" +
                 currentEye.upx + " " + currentEye.upy + " " + currentEye.upz + "\n");
-        //Log.w(TAG, "mfingerRotationX : "+mfingerRotationX + "\n");
         Log.w(TAG, "=========================  " + "\n");
     }
 

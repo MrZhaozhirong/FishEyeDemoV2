@@ -216,6 +216,9 @@ public class PanoramaNewBall {
     }
 
     public int nextControlMode() {
+        if(updateingBallControlMode)
+            return currentControlMode;
+
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
             tartgetEye.setCameraVector(0, 0, -1.0f);
@@ -256,6 +259,33 @@ public class PanoramaNewBall {
     public void updateBallControlMode() {
         if(currentControlMode != targetControlMode){
             updateingBallControlMode = true;
+            // 2018 01 26 新增鱼眼双击还原到水晶球
+            if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE &&
+                    targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
+                if( Math.abs(currentOverture-targetOverture) > 0.1f){
+                    float diff = Math.abs(targetOverture - currentOverture) / 15f; //1.0f;
+                    if(currentOverture < targetOverture)
+                        currentOverture += diff;
+                    else
+                        currentOverture-=diff;
+                }else{
+                    currentOverture = CRYSTAL_OVERTURE;
+                }
+
+                if(!currentEye.equals(tartgetEye)){
+                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                    currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
+                }else{
+                    currentEye.setCameraVector(0, 0, -2.0f);
+                }
+
+                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
+                        && currentEye.equals(tartgetEye)){
+                    //切换完成
+                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+                    this.zoomTimes = 0;
+                }
+            }
             //从水晶球切换成 鱼眼
             if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL &&
                     targetControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
@@ -634,6 +664,33 @@ public class PanoramaNewBall {
             }
         }
     }
+
+
+    /**
+     * 双击操作
+     */
+    public void handleDoubleClick() {
+
+    }
+
+    // 特殊处理  从鱼眼双击还原到水晶球
+    public int fishEyeReturnToCrystal() {
+        if(updateingBallControlMode)
+            return currentControlMode;
+        // fishEye -> crystal
+        if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
+            targetOverture = CRYSTAL_OVERTURE;
+            tartgetEye.setCameraVector(0, 0, -2.0f);
+            //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
+            //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
+            targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+        }
+        return targetControlMode;
+    }
+
+
+
+
 
     /**
      * 双手操作
