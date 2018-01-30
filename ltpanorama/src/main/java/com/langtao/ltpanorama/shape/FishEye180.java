@@ -198,6 +198,7 @@ public class FishEye180 {
     }
 
     public void draw(){
+        if(fishShader == null) return ;
         GLES20.glUseProgram(fishShader.getShaderProgramId());
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         //将最终变换矩阵写入
