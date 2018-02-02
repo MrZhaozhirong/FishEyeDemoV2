@@ -131,10 +131,11 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 }
                 if(buffer != null) buffer.release();
             }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-                picBall.updateBallControlMode();
+
                 if(!picBall.isInitialized) {
                     picBall.onSurfaceCreated(bitmap_path);
                 }
+                picBall.updateBallControlMode();
                 picBall.updateBallMatrix();
                 picBall.draw();
             }else {
