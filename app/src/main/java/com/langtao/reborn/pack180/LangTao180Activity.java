@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.Environment;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -14,12 +14,21 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.langtao.device.SDKinitUtil;
-import com.langtao.ltpanorama.LangTao180RenderMgr;
+import com.langtao.ltpanorama.LangTao360RenderMgr;
+import com.langtao.ltpanorama.component.YUVFrame;
+import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.reborn.R;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
+import glnk.client.GlnkChannel;
 import glnk.client.GlnkClient;
 import glnk.media.AViewRenderer;
-import glnk.media.AliOSSDataSource;
 import glnk.media.GlnkDataSource;
 import glnk.media.GlnkPlayer;
 import glnk.media.VideoRenderer;
@@ -33,12 +42,12 @@ public class LangTao180Activity extends Activity {
     public static final String TAG = "LangTao180Activity";
     private RelativeLayout gl_view_container;
     private GLSurfaceView gl_view;
-    private Handler handler= new Handler();
+    private LT180Handler handler;
     //nStreamType实时流，码流类型， 0-主码流； 1-次码流
     //dataType流数据类型, 0-视频流, 1-音频流, 2-音视频流
     private int channelNo=0, streamType=0, dataType=2;
 
-    private LangTao180RenderMgr mLT180RenderMgr;
+    private LangTao360RenderMgr mLT180RenderMgr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,13 +56,16 @@ public class LangTao180Activity extends Activity {
         setContentView(R.layout.activity_180);
 
         gl_view_container = (RelativeLayout) findViewById(R.id.gl_view_container);
+
+        handler= new LT180Handler(LangTao180Activity.this);
     }
 
     private void initGLSurfaceView() {
         gl_view_container.removeAllViews();
         if( SDKinitUtil.checkGLEnvironment() ){
             if(mLT180RenderMgr==null)
-                mLT180RenderMgr = new LangTao180RenderMgr();
+                mLT180RenderMgr = new LangTao360RenderMgr();
+            mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180);
             gl_view = new GLSurfaceView(LangTao180Activity.this);
             gl_view.setEGLContextClientVersion(2);
             gl_view.setRenderer(mLT180RenderMgr);
@@ -98,6 +110,8 @@ public class LangTao180Activity extends Activity {
         if(gl_view!=null) gl_view.onPause();
 
         close_connect();
+
+        release();
     }
 
     public void clickAddGid(@SuppressLint("USELESS") View view) {
@@ -114,13 +128,34 @@ public class LangTao180Activity extends Activity {
                 channelNo, streamType, dataType);
     }
 
-    
+    public void clickSearchVodPlayback(@SuppressLint("USELESS") View view) {
+        EditText et_gid = (EditText) findViewById(R.id.gid);
+        EditText et_account = (EditText) findViewById(R.id.account);
+        EditText et_password = (EditText) findViewById(R.id.password);
+
+        if (vodChannel != null) {
+            vodChannel.stop();
+            vodChannel.release();
+            vodChannel = null;
+        }
+
+        Log.w(TAG, "设备sd卡连接... ...");
+        vodSource = new VideoSearchDataSourceImpl(handler);
+        vodChannel = new GlnkChannel(vodSource);
+        vodChannel.setMetaData(et_gid.getText().toString(),
+                et_account.getText().toString(),
+                et_password.getText().toString(),
+                0, 2, 0);
+        vodChannel.start();
+    }
+
+
     private float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
         return (float) Math.sqrt(x * x + y * y);
     }
-    
+
     private class GLViewTouchListener implements View.OnTouchListener {
         private float oldDist;
         private int mode = 0;
@@ -218,6 +253,161 @@ public class LangTao180Activity extends Activity {
             return true;
         }
     }
+
+    private void release() {
+        if (vodChannel!=null){
+            vodChannel.stop();
+            vodChannel.release();
+            vodChannel = null;
+        }
+        if (renderer!=null){
+            renderer.stop();
+            renderer.release();
+            renderer = null;
+        }
+        if (player!=null){
+            player.stop();
+            player.release();
+            player = null;
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////   搜索录像回放   //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private GlnkChannel vodChannel;
+    private VideoSearchDataSourceImpl vodSource;
+    private VideoSearchDataSourceListenerImpl videoSearchListener;
+
+    public void startVideoSearch() {
+        EditText et_day = (EditText) findViewById(R.id.day);
+        EditText et_hour = (EditText) findViewById(R.id.hour);
+        EditText et_minute = (EditText) findViewById(R.id.minute);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        Date d = new Date();
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.DAY_OF_MONTH, Integer.parseInt(et_day.getText().toString()));
+        c.set(Calendar.HOUR, Integer.parseInt(et_hour.getText().toString()));
+        c.set(Calendar.MINUTE, Integer.parseInt(et_minute.getText().toString()));
+
+        int rs = this.vodChannel.searchRemoteFile2(
+                0xff,
+                0xff,
+                //start time
+                c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1,
+                c.get(Calendar.DAY_OF_MONTH),
+                c.get(Calendar.HOUR), c.get(Calendar.MINUTE), 0,
+                //end time
+                c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1,
+                c.get(Calendar.DAY_OF_MONTH),
+                c.get(Calendar.HOUR)+23, c.get(Calendar.MINUTE)+59, 59);
+
+        if (rs < 0) {
+            Toast.makeText(this, "搜索文件失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void stopVideoSearch() {
+        if (vodChannel != null) {
+            vodChannel.stop();
+            vodChannel.release();
+            vodChannel = null;
+        }
+    }
+
+    public void requestPlayVideo(String fileName) {
+        if (source != null) {
+            source.stop();
+            source.release();
+            source = null;
+        }
+        source = new GlnkDataSource(GlnkClient.getInstance());
+        source.getGlnkChannel().setReconnectable(false);
+
+        EditText et_gid = (EditText) findViewById(R.id.gid);
+        EditText et_account = (EditText) findViewById(R.id.account);
+        EditText et_password = (EditText) findViewById(R.id.password);
+        streamType = 2;
+        source.setMetaData(et_gid.getText().toString(),
+                et_account.getText().toString(), et_password.getText().toString(),
+                channelNo, streamType, dataType);
+
+        if(videoSearchListener ==null) {
+            videoSearchListener = new VideoSearchDataSourceListenerImpl(handler);
+            videoSearchListener.setPlaybackVideoFilename(fileName);
+        }
+
+        source.setGlnkDataSourceListener(videoSearchListener);
+
+        if(renderer!=null){
+            renderer.release();
+            renderer = null;
+        }
+
+        renderer = new AViewRenderer(LangTao180Activity.this, null);
+        ((AViewRenderer) renderer).setCallBackDataType(AViewRenderer.CB_DATA_TYPE_YUV);
+        ((AViewRenderer) renderer).setValidateYUVCallback(new AViewRenderer.ValidateYUVCallback() {
+            @Override
+            public void yuv_Callback(int width, int height, byte[] byYdata, int nYLen, byte[] byUdata, int nULen, byte[] byVdata, int nVLen) {
+                //Log.d(TAG, "Note: yuv_Callback !!! ");
+                if( mLT180RenderMgr != null ){
+                    //Log.i(TAG, "mLT180RenderMgr  add_buffer !!!");
+                    mLT180RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
+                }
+                if(requestDumpYuv){
+                    new DumpYUVFrameFile(width,height,byYdata,byUdata,byVdata,"dump_video.yuv").start();
+                }
+            }
+        });
+
+        if(player!=null){
+            player.stop();
+            player.release();
+            player = null;
+        }
+        player = new GlnkPlayer();
+        player.prepare();
+        player.setDataSource(source);
+        player.setDisplay(renderer);
+        player.start();
+    }
+
+    public void playRemoteFile(String playbackVideoFilename) {
+        String[] split = playbackVideoFilename.split(",");
+        if(split.length != 4){
+            Log.w(TAG, "playbackVideoFilename 格式错误。");
+            return;
+        }
+
+        int count = Integer.parseInt(split[0]);
+        int recordType = Integer.parseInt(split[1]);
+        String startTimeStr = split[2]; // "%d:%d:%d:%d:%d:%d"
+        String endTimeStr = split[3];
+
+        String[] startTime = startTimeStr.split(":");
+        if(startTime.length != 6) {
+            Log.w(TAG, "playbackVideoFilename 格式错误。");
+            return;
+        }
+        int iStartYear = Integer.parseInt(startTime[0]);
+        int iStartMonth = Integer.parseInt(startTime[1]);
+        int iStartDay = Integer.parseInt(startTime[2]);
+        int iStartHour = Integer.parseInt(startTime[3]);
+        int iStartMinute = Integer.parseInt(startTime[4]);
+        int iStartSec = Integer.parseInt(startTime[5]);
+
+        int result_video_file_request = source.remoteFileRequest2(
+                iStartYear, iStartMonth, iStartDay, iStartHour, iStartMinute, iStartSec);
+        Log.w(TAG, "result_vodfile_request = "
+                + result_video_file_request + " " + playbackVideoFilename);
+        if (result_video_file_request != 0) {
+            Log.w(TAG, "request video file failed!    re_request_video_file");
+            //requestPlayVideo(playbackVideoFilename);
+        }
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////   链接直播视频源   ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,7 +415,6 @@ public class LangTao180Activity extends Activity {
     private VideoRenderer renderer;
     private GlnkPlayer player;
     private GlnkDataSource source;
-    private AliOSSDataSource alisource; //云存同理，都是在yuv_callback回调 往mPanoramaRenderMgr里面addBuffer
     private Glnk180DataSourceListenerImpl dataSourceListener;
 
     public void open_connect(String gid, String username, String password,
@@ -245,6 +434,9 @@ public class LangTao180Activity extends Activity {
                     //Log.i(TAG, "mLT180RenderMgr  add_buffer !!!");
                     mLT180RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
                 }
+                if(requestDumpYuv){
+                    new DumpYUVFrameFile(width,height,byYdata,byUdata,byVdata,"dump_real.yuv").start();
+                }
             }
         });
 
@@ -253,9 +445,11 @@ public class LangTao180Activity extends Activity {
             source.release();
             source = null;
         }
-        dataSourceListener = new Glnk180DataSourceListenerImpl();
+        if(dataSourceListener ==null)
+            dataSourceListener = new Glnk180DataSourceListenerImpl();
         source = new GlnkDataSource(GlnkClient.getInstance());
         source.setGlnkDataSourceListener(dataSourceListener);
+        streamType = 0;
         source.setMetaData(gid, username, password, channelNo, streamType, dataType);
 
         if(player!=null){
@@ -276,6 +470,65 @@ public class LangTao180Activity extends Activity {
             //里面已经会把source也stop
             player.release();
             player = null;
+        }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private volatile boolean requestDumpYuv = false;
+
+    public void clickDumpYuv(@SuppressLint("USELESS") View view) {
+        requestDumpYuv = true;
+    }
+
+    private volatile String PanoramaScreenshot_path = Environment.getExternalStorageDirectory().getPath();
+
+    private class DumpYUVFrameFile extends Thread{
+        private final YUVFrame frame;
+        private final String fileName;
+        public DumpYUVFrameFile(YUVFrame frame,String fileName){
+            this.frame = frame;
+            this.fileName = fileName;
+            requestDumpYuv = false;
+        }
+        public DumpYUVFrameFile(int width, int height,
+                                byte[] byYdata, byte[] byUdata, byte[] byVdata,
+                                String fileName){
+            YUVFrame yuvFrame = new YUVFrame();
+            yuvFrame.setYDataBuffer(byYdata);
+            yuvFrame.setUDataBuffer(byUdata);
+            yuvFrame.setVDataBuffer(byVdata);
+            yuvFrame.setWidth(width);
+            yuvFrame.setHeight(height);
+            this.frame = yuvFrame;
+            this.fileName = fileName;
+            requestDumpYuv = false;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            String filename = PanoramaScreenshot_path+"/"+fileName;
+            Log.d(TAG, "dump yuv file : "+filename);
+            try {
+                File file = new File(filename);
+                if(file.exists()) {
+                    boolean delete = file.delete();
+                    if(delete) {
+                        FileOutputStream fos = new FileOutputStream(file,false);
+                        fos.write(frame.getYuvbyte());
+                        fos.close();
+                    }
+                } else {
+                    FileOutputStream fos = new FileOutputStream(file,false);
+                    fos.write(frame.getYuvbyte());
+                    fos.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

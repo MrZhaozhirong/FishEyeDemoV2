@@ -58,8 +58,79 @@
             android:onClick="clickConnect" />
     </LinearLayout>
 
-    <RelativeLayout
+    <LinearLayout
+        android:id="@+id/second"
         android:layout_below="@id/first"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <EditText
+                android:id="@+id/day"
+                style="?android:attr/textAppearance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="day"
+                android:inputType="number"
+                android:maxLines="1"/>
+            <Space
+                android:layout_width="2dp"
+                android:layout_height="match_parent"/>
+            <EditText
+                android:id="@+id/hour"
+                style="?android:attr/textAppearance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="hour"
+                android:inputType="number"
+                android:maxLines="1"/>
+            <Space
+                android:layout_width="2dp"
+                android:layout_height="match_parent"/>
+            <EditText
+                android:id="@+id/minute"
+                style="?android:attr/textAppearance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="minute"
+                android:inputType="number"
+                android:maxLines="1"/>
+            <Space
+                android:layout_width="2dp"
+                android:layout_height="match_parent"/>
+            <Button
+                android:id="@+id/search_vod_playback"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="搜索录像回放"
+                android:onClick="clickSearchVodPlayback" />
+            <Space
+                android:layout_width="2dp"
+                android:layout_height="match_parent"/>
+            <Button
+                android:id="@+id/dump_yuv"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="dump yuv"
+                android:onClick="clickDumpYuv" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="填开始时间，结束时间是开始+2小时"/>
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_below="@id/second"
         android:id="@+id/gl_view_container"
         android:layout_width="350dp"
         android:layout_height="350dp"/>

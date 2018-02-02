@@ -39,7 +39,7 @@ class LT720Handler extends Handler {
             case VIDEO_SEARCH:{
                 //搜索模板文件
                 LangTao720Activity.PanoFileDownload("pano.tem");
-                //自动回调GlnkVodSearchDataSourceImpl的onPanoFileDownload
+                //自动回调GlnkVodSearchDataSourceImpl 的 onPanoFileDownload
                 break;
             }
             case VIDEO_ONAUTH:{

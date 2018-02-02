@@ -181,8 +181,10 @@ public class LangTao720Activity extends Activity {
                 channelNo, streamType, dataType);
         if(mLT720RenderMgr != null) {
             //要先下载配置文件。
-            if(mLT720RenderMgr instanceof LangTao720RenderMgr)
-            ((LangTao720RenderMgr)mLT720RenderMgr).setPanoTemConfigFile(getPanoramaConfigFilePath(false));
+            if(mLT720RenderMgr instanceof LangTao720RenderMgr){
+                ((LangTao720RenderMgr)mLT720RenderMgr).setPanoTemConfigFile(getPanoramaConfigFilePath(false));
+                ((LangTao720RenderMgr)mLT720RenderMgr).setPanoTemSecretKey(gid.getText().toString());
+            }
         }
     }
 
