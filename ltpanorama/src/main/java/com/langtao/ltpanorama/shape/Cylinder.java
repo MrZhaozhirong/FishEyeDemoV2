@@ -117,10 +117,11 @@ public class Cylinder {
 
     private void buildProgram() {
         shader = new OneFishEye360ShaderProgram();
-        GLES20.glUseProgram(shader.getShaderProgramId());
+        //GLES20.glUseProgram(shader.getShaderProgramId());
     }
 
     private boolean initTexture(int width, int height, YUVFrame frame) {
+        if(shader ==null) return false;
         GLES20.glUseProgram(shader.getShaderProgramId());
         int[] yuvTextureIDs = TextureHelper.loadYUVTexture2(width, height,
                 frame.getYDataBuffer(), frame.getUDataBuffer(), frame.getVDataBuffer());
@@ -145,6 +146,7 @@ public class Cylinder {
     }
 
     private void setAttributeStatus() {
+        if(shader ==null) return ;
         GLES20.glUseProgram(shader.getShaderProgramId());
 
         float kColorConversion420[] = {
@@ -213,7 +215,7 @@ public class Cylinder {
 
 
     private boolean updateTexture(@NonNull YUVFrame yuvFrame) {
-        if (yuvFrame == null) return false;
+        if (yuvFrame == null || shader==null) return false;
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
         ByteBuffer yDatabuffer = yuvFrame.getYDataBuffer();
@@ -263,6 +265,7 @@ public class Cylinder {
 
     private void draw() {
         //将最终变换矩阵写入
+        if(shader ==null) return ;
         GLES20.glUseProgram(shader.getShaderProgramId());
         GLES20.glUniformMatrix4fv(shader.uMVPMatrixLocation, 1, false, getFinalMatrix(), 0);
         if(indicesBuffer==null){

@@ -31,7 +31,7 @@ public class FishEye360 {
         System.loadLibrary("LTFishEyeProc");
     }
 
-    private static final String TAG = "FishEye360";
+    private static final String TAG = "OneFishEye360";
     private final static double overture = 45;
     private float[] mProjectionMatrix = new float[16];// 4x4矩阵 存储投影矩阵
     private float[] mViewMatrix = new float[16]; // 摄像机位置朝向9参数矩阵
@@ -158,6 +158,7 @@ public class FishEye360 {
     }
 
     private boolean initTexture(int width, int height, YUVFrame frame) {
+        if(fishShader ==null) return false;
         GLES20.glUseProgram(fishShader.getShaderProgramId());
         int[] yuvTextureIDs = TextureHelper.loadYUVTexture2(width, height,
                 frame.getYDataBuffer(), frame.getUDataBuffer(), frame.getVDataBuffer());
@@ -182,6 +183,7 @@ public class FishEye360 {
     }
 
     private void setAttributeStatus() {
+        if(fishShader ==null) return ;
         GLES20.glUseProgram(fishShader.getShaderProgramId());
 
         float kColorConversion420[] = {
@@ -224,7 +226,7 @@ public class FishEye360 {
     }
 
     private boolean updateTexture(YUVFrame yuvFrame) {
-        if (yuvFrame == null) return false;
+        if (yuvFrame == null || fishShader == null) return false;
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
         ByteBuffer yDatabuffer = yuvFrame.getYDataBuffer();
@@ -275,6 +277,7 @@ public class FishEye360 {
     }
 
     public void draw() {
+        if(fishShader ==null) return ;
         GLES20.glUseProgram( fishShader.getShaderProgramId() );
         //将最终变换矩阵写入
         GLES20.glUniformMatrix4fv(fishShader.uMVPMatrixLocation, 1, false, getFinalMatrix(), 0);

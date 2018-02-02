@@ -36,7 +36,7 @@ public class FishEye180 {
     private static final int TEXTURE_COORDIANTE_COMPONENT_COUNT = 2; // 每个纹理坐标为 S T两个
     private final static double overture = 45;
     //*****************************************************************
-    OneFishEye180ShaderProgram fishShader;
+    private OneFishEye180ShaderProgram shader;
     private int drawElementType;
     private OneFisheyeOut out;
     private OneFisheye180Param outParam;
@@ -108,6 +108,7 @@ public class FishEye180 {
                 //is.read(dataArray);
                 outParam = new OneFisheye180Param();
                 //int ret = FishEyeProc.getOneFisheye180Param(dataArray, 1280, 720, outParam);
+                Log.w(TAG, "OneFisheye180Param YUVFrame width&height : " + width + "  " + height);
                 int ret = FishEyeProc.getOneFisheye180Param(frame.getYuvbyte(), width, height, outParam);
                 if (ret != 0) {
                     return;
@@ -140,12 +141,13 @@ public class FishEye180 {
     }
 
     private void buildProgram() {
-        fishShader = new OneFishEye180ShaderProgram();
-        //GLES20.glUseProgram( fishShader.getShaderProgramId() );
+        shader = new OneFishEye180ShaderProgram();
+        //GLES20.glUseProgram( shader.getShaderProgramId() );
     }
 
     private boolean initTexture(int width,int height,YUVFrame frame) {
-        GLES20.glUseProgram( fishShader.getShaderProgramId() );
+        if(shader == null) return false;
+        GLES20.glUseProgram( shader.getShaderProgramId() );
 
         int[] yuvTextureIDs = TextureHelper.loadYUVTexture2(width, height,
                 frame.getYDataBuffer(),frame.getUDataBuffer(),frame.getVDataBuffer());
@@ -155,54 +157,55 @@ public class FishEye180 {
         }
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureIDs[0]);
-        GLES20.glUniform1i(fishShader.uLocationSamplerY, 0); // => GLES20.GL_TEXTURE0
+        GLES20.glUniform1i(shader.uLocationSamplerY, 0); // => GLES20.GL_TEXTURE0
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureIDs[1]);
-        GLES20.glUniform1i(fishShader.uLocationSamplerU, 1); // => GLES20.GL_TEXTURE1
+        GLES20.glUniform1i(shader.uLocationSamplerU, 1); // => GLES20.GL_TEXTURE1
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE2);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureIDs[2]);
-        GLES20.glUniform1i(fishShader.uLocationSamplerV, 2); // => GLES20.GL_TEXTURE2
+        GLES20.glUniform1i(shader.uLocationSamplerV, 2); // => GLES20.GL_TEXTURE2
 
         _yuvTextureIDs = yuvTextureIDs;
         return true;
     }
 
     public void setAttributeStatus() {
-        GLES20.glUseProgram( fishShader.getShaderProgramId() );
+        if(shader == null) return ;
+        GLES20.glUseProgram( shader.getShaderProgramId() );
         float kColorConversion420[] = {
                 1.0f, 1.0f, 1.0f,
                 0.0f, -0.39465f, 2.03211f,
                 1.13983f, -0.58060f, 0.0f
         };
-        GLES20.glUniformMatrix3fv(fishShader.uLocationCCM, 1, false, kColorConversion420, 0);
+        GLES20.glUniformMatrix3fv(shader.uLocationCCM, 1, false, kColorConversion420, 0);
         if(verticesBuffer==null||texCoordsBuffer==null){
             return;
         }
-        verticesBuffer.setVertexAttribPointer(fishShader.aPositionLocation,
+        verticesBuffer.setVertexAttribPointer(shader.aPositionLocation,
                 POSITION_COORDIANTE_COMPONENT_COUNT,
                 POSITION_COORDIANTE_COMPONENT_COUNT * BYTES_PER_FLOAT, 0);
-        texCoordsBuffer.setVertexAttribPointer(fishShader.aTexCoordLocation,
+        texCoordsBuffer.setVertexAttribPointer(shader.aTexCoordLocation,
                 TEXTURE_COORDIANTE_COMPONENT_COUNT,
                 TEXTURE_COORDIANTE_COMPONENT_COUNT * BYTES_PER_FLOAT, 0);
 
         float width = (float)outParam.width;
         float height = (float)outParam.height;
-        GLES20.glUniform1f(fishShader.uLocationWidth, width);
-        GLES20.glUniform1f(fishShader.uLocationHeight, height);
-        GLES20.glUniform1f(fishShader.uLocationRectX, outParam.rectX);
-        GLES20.glUniform1f(fishShader.uLocationRectY, outParam.rectY);
-        GLES20.glUniform1f(fishShader.uLocationRectWidth, outParam.rectWidth);
-        GLES20.glUniform1f(fishShader.uLocationRectHeight, outParam.rectHeight);
+        GLES20.glUniform1f(shader.uLocationWidth, width);
+        GLES20.glUniform1f(shader.uLocationHeight, height);
+        GLES20.glUniform1f(shader.uLocationRectX, outParam.rectX);
+        GLES20.glUniform1f(shader.uLocationRectY, outParam.rectY);
+        GLES20.glUniform1f(shader.uLocationRectWidth, outParam.rectWidth);
+        GLES20.glUniform1f(shader.uLocationRectHeight, outParam.rectHeight);
     }
 
     public void draw(){
-        if(fishShader == null) return ;
-        GLES20.glUseProgram(fishShader.getShaderProgramId());
+        if(shader == null) return ;
+        GLES20.glUseProgram(shader.getShaderProgramId());
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         //将最终变换矩阵写入
-        GLES20.glUniformMatrix4fv(fishShader.uMVPMatrixLocation, 1, false, getFinalMatrix(),0);
+        GLES20.glUniformMatrix4fv(shader.uMVPMatrixLocation, 1, false, getFinalMatrix(),0);
 		if(indicesBuffer==null){
 			return;
 		}
@@ -277,14 +280,14 @@ public class FishEye180 {
 
 
     public boolean updateTexture(@NonNull YUVFrame yuvFrame ){
-        if(yuvFrame==null) return false;
+        if(yuvFrame==null || shader == null) return false;
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
         ByteBuffer yDatabuffer = yuvFrame.getYDataBuffer();
         ByteBuffer uDatabuffer = yuvFrame.getUDataBuffer();
         ByteBuffer vDatabuffer = yuvFrame.getVDataBuffer();
 
-        GLES20.glUseProgram(fishShader.getShaderProgramId());
+        GLES20.glUseProgram(shader.getShaderProgramId());
         //if(width != mFrameWidth || height!= mFrameHeight)
         {
             //先去掉旧的纹理
@@ -306,13 +309,13 @@ public class FishEye180 {
         //重新加载纹理
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
-        GLES20.glUniform1i(fishShader.uLocationSamplerY, 0);
+        GLES20.glUniform1i(shader.uLocationSamplerY, 0);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[1]);
-        GLES20.glUniform1i(fishShader.uLocationSamplerU, 1);
+        GLES20.glUniform1i(shader.uLocationSamplerU, 1);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE2);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[2]);
-        GLES20.glUniform1i(fishShader.uLocationSamplerV, 2);
+        GLES20.glUniform1i(shader.uLocationSamplerV, 2);
         return true;
     }
 

@@ -61,44 +61,7 @@ public class PanoTemplateBall {
     }
 
 
-    //private boolean initTemplateConfigFile(String key, String templateFileName) {
-    //    ByteBuffer dataBuffer = null;
-    //    try
-    //    {
-    //        File configFile = new File(templateFileName);
-    //        if(!configFile.exists()) {
-    //            return false;
-    //        }
-    //        FileInputStream fis = new FileInputStream(new File(templateFileName));
-    //        byte[] dataArray = new byte[fis.available()];
-
-    //        m_templateParam = PanoTemplateProc.decryptTemplate(dataArray, key);
-    //        if (m_templateParam == null) {
-    //            return false;
-    //        }
-
-    //        Log.d(TAG, "DEBUG: templateFile length "+m_templateParam.panoTem.length);
-    //        Log.d(TAG, "DEBUG: m_templateParam.width*height = "+m_templateParam.width+" x "+m_templateParam.height);
-    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4 length "+ m_templateParam.width * m_templateParam.height * 4);
-    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4*2 length "+ m_templateParam.width * m_templateParam.height * 4 * 2);
-    //        if(m_templateParam.panoTem.length < m_templateParam.width * m_templateParam.height*4*2) {
-    //            throw new IllegalArgumentException("Error: Panorama Template Config File Wrong !!!");
-    //        }
-
-    //        dataBuffer = ByteBuffer.allocateDirect(m_templateParam.panoTem.length )
-    //                .order(ByteOrder.nativeOrder());
-    //        dataBuffer.put(m_templateParam.panoTem);
-    //        dataBuffer.clear();
-    //        loadTemplateTexture(dataBuffer);
-    //        return true;
-    //    }catch (Exception ex){
-    //        ex.printStackTrace();
-    //    }
-    //    return false;
-    //}
-
-
-    private boolean initTemplateConfigFile(String templateFileName) {
+    private boolean initTemplateConfigFile(String key, String templateFileName) {
         ByteBuffer dataBuffer = null;
         try
         {
@@ -108,17 +71,24 @@ public class PanoTemplateBall {
             }
             FileInputStream fis = new FileInputStream(new File(templateFileName));
             byte[] dataArray = new byte[fis.available()];
-            Log.d(TAG, "DEBUG: templateFile length "+dataArray.length);
+            fis.read(dataArray);
+
+            m_templateParam = PanoTemplateProc.decryptTemplate(dataArray, key);
+            if (m_templateParam == null) {
+                return false;
+            }
+
+            Log.d(TAG, "DEBUG: templateFile length "+m_templateParam.panoTem.length);
             Log.d(TAG, "DEBUG: m_templateParam.width*height = "+m_templateParam.width+" x "+m_templateParam.height);
             Log.d(TAG, "DEBUG: m_templateParam width*height*4 length "+ m_templateParam.width * m_templateParam.height * 4);
             Log.d(TAG, "DEBUG: m_templateParam width*height*4*2 length "+ m_templateParam.width * m_templateParam.height * 4 * 2);
-            if(dataArray.length < m_templateParam.width * m_templateParam.height*4*2) {
+            if(m_templateParam.panoTem.length < m_templateParam.width * m_templateParam.height*4*2) {
                 throw new IllegalArgumentException("Error: Panorama Template Config File Wrong !!!");
             }
-            fis.read(dataArray);
-            dataBuffer = ByteBuffer.allocateDirect(dataArray.length)
+
+            dataBuffer = ByteBuffer.allocateDirect(m_templateParam.panoTem.length )
                     .order(ByteOrder.nativeOrder());
-            dataBuffer.put(dataArray);
+            dataBuffer.put(m_templateParam.panoTem);
             dataBuffer.clear();
             loadTemplateTexture(dataBuffer);
             return true;
@@ -127,6 +97,37 @@ public class PanoTemplateBall {
         }
         return false;
     }
+
+
+    //private boolean initTemplateConfigFile(String templateFileName) {
+    //    ByteBuffer dataBuffer = null;
+    //    try
+    //    {
+    //        File configFile = new File(templateFileName);
+    //        if(!configFile.exists()) {
+    //            return false;
+    //        }
+    //        FileInputStream fis = new FileInputStream(new File(templateFileName));
+    //        byte[] dataArray = new byte[fis.available()];
+    //        Log.d(TAG, "DEBUG: templateFile length "+dataArray.length);
+    //        Log.d(TAG, "DEBUG: m_templateParam.width*height = "+m_templateParam.width+" x "+m_templateParam.height);
+    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4 length "+ m_templateParam.width * m_templateParam.height * 4);
+    //        Log.d(TAG, "DEBUG: m_templateParam width*height*4*2 length "+ m_templateParam.width * m_templateParam.height * 4 * 2);
+    //        if(dataArray.length < m_templateParam.width * m_templateParam.height*4*2) {
+    //            throw new IllegalArgumentException("Error: Panorama Template Config File Wrong !!!");
+    //        }
+    //        fis.read(dataArray);
+    //        dataBuffer = ByteBuffer.allocateDirect(dataArray.length)
+    //                .order(ByteOrder.nativeOrder());
+    //        dataBuffer.put(dataArray);
+    //        dataBuffer.clear();
+    //        loadTemplateTexture(dataBuffer);
+    //        return true;
+    //    }catch (Exception ex){
+    //        ex.printStackTrace();
+    //    }
+    //    return false;
+    //}
 
 
     private void loadTemplateTexture(ByteBuffer dataBuffer) {
@@ -284,37 +285,16 @@ public class PanoTemplateBall {
     public volatile boolean isInitialized = false;
 
     // 模板加密了
-    //public void onSurfaceCreated(String secretKeyString, String templateFileName) {
-    //    if( (templateFileName==null || "".equalsIgnoreCase(templateFileName) )
-    //        &&
-    //        (secretKeyString==null || "".equalsIgnoreCase(secretKeyString) )
-    //            ) {
-    //        Log.e(TAG, "Error: setPanoTemplateConfigFile param invalid !!!");
-    //        Log.e(TAG, "Error: It will error show Panorama in LangTao-GL !!!");
-    //        throw new IllegalArgumentException("Error: Panorama Template Config File is null or File not exists !!!");
-    //    }else {
-    //        if( initTemplateConfigFile(secretKeyString, templateFileName) ){
-    //            createBufferData();
-    //            buildProgram();
-    //            //initTexture(frame);
-    //            setAttributeStatus();
-    //            this.isInitialized = true;
-    //        }
-    //    }
-    //}
-
-    // 模板没加密
-    public void onSurfaceCreated(String templateFileName) {
-        // 获取模板参数
-        m_templateParam = PanoTemplateProc.getPanoTemplateSize();
-        if(templateFileName==null ||
-                "".equalsIgnoreCase(templateFileName) ||
-                !new File(templateFileName).exists() ) {
-            Log.e(TAG, "Error: setPanoTemplateConfigFile is null or File not exists !!!");
+    public void onSurfaceCreated(String secretGIDStr, String templateFileName) {
+        if( (templateFileName==null || "".equalsIgnoreCase(templateFileName) )
+            &&
+            (secretGIDStr==null || "".equalsIgnoreCase(secretGIDStr) )
+                ) {
+            Log.e(TAG, "Error: setPanoTemplateConfigFile param invalid !!!");
             Log.e(TAG, "Error: It will error show Panorama in LangTao-GL !!!");
             throw new IllegalArgumentException("Error: Panorama Template Config File is null or File not exists !!!");
         }else {
-            if( initTemplateConfigFile(templateFileName) ){
+            if( initTemplateConfigFile(secretGIDStr, templateFileName) ){
                 createBufferData();
                 buildProgram();
                 //initTexture(frame);
@@ -323,6 +303,27 @@ public class PanoTemplateBall {
             }
         }
     }
+
+    // 模板没加密
+    //public void onSurfaceCreated(String templateFileName) {
+    //    // 获取模板参数
+    //    m_templateParam = PanoTemplateProc.getPanoTemplateSize();
+    //    if(templateFileName==null ||
+    //            "".equalsIgnoreCase(templateFileName) ||
+    //            !new File(templateFileName).exists() ) {
+    //        Log.e(TAG, "Error: setPanoTemplateConfigFile is null or File not exists !!!");
+    //        Log.e(TAG, "Error: It will error show Panorama in LangTao-GL !!!");
+    //        throw new IllegalArgumentException("Error: Panorama Template Config File is null or File not exists !!!");
+    //    }else {
+    //        if( initTemplateConfigFile(templateFileName) ){
+    //            createBufferData();
+    //            buildProgram();
+    //            //initTexture(frame);
+    //            setAttributeStatus();
+    //            this.isInitialized = true;
+    //        }
+    //    }
+    //}
 
     public void onSurfaceChanged(int width, int height) {
         GLES20.glViewport(0,0,width,height);

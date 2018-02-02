@@ -40,13 +40,13 @@ public class LangTao720RenderMgr extends LTRenderManager {
         }
     }
 
-    // 设置 全景模板解密密钥
-    private String panoTemplateConfigFile_SecretKey = null;
+    // 设置 全景模板解密GID
+    private String panoTemplateConfigFile_gid = null;
 
-    public void setPanoTemSecretKey(String secretKeyString) {
-        this.panoTemplateConfigFile_SecretKey = secretKeyString;
-        if(panoTemplateConfigFile_SecretKey==null ||
-                "".equalsIgnoreCase(panoTemplateConfigFile_SecretKey) ) {
+    public void setPanoTemSecretKey(String secretGIDStr) {
+        this.panoTemplateConfigFile_gid = secretGIDStr;
+        if(panoTemplateConfigFile_gid==null ||
+                "".equalsIgnoreCase(panoTemplateConfigFile_gid) ) {
             Log.e(TAG, "Error: setPanoTemSecretKey is null, invalid !!!");
             Log.e(TAG, "Error: It will throw Exceptions in init LangTao-GL !!!");
         }
@@ -108,6 +108,7 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 if(buffer != null){
                     if(!templateBall.isInitialized) {
                         templateBall.onSurfaceCreated(
+                                panoTemplateConfigFile_gid,
                                 panoTemplateConfigFileName_AbsolutePath);
                     }
                     templateBall.updateTexture(buffer);
@@ -119,6 +120,7 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 if(requestScreenShot ) {
                     if(!panoTmRender.isInitialized ){
                         panoTmRender.onEGLSurfaceCreated(
+                                panoTemplateConfigFile_gid,
                                 panoTemplateConfigFileName_AbsolutePath);
                     }
                     if(buffer!=null ){

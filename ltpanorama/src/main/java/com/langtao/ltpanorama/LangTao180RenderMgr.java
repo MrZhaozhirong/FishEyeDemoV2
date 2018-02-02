@@ -44,7 +44,7 @@ public class LangTao180RenderMgr extends LTRenderManager {
             if(buffer != null){
                 if(!curvedPlate.isInitialized)
                     curvedPlate.onSurfaceCreate(buffer);
-                Log.i(TAG, "mLT180RenderMgr   onDrawFrame buffer !!!");
+
                 curvedPlate.updateTexture(buffer);
                 buffer.release();
             }

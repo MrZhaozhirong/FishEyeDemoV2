@@ -127,6 +127,7 @@ public class FourEye360 {
     }
 
     private boolean initTexture(int width,int height,YUVFrame frame) {
+        if(fishShader ==null) return false;
         GLES20.glUseProgram( fishShader.getShaderProgramId() );
         int[] yuvTextureIDs = TextureHelper.loadYUVTexture2(width, height,
                 frame.getYDataBuffer(),frame.getUDataBuffer(),frame.getVDataBuffer());
@@ -153,6 +154,7 @@ public class FourEye360 {
     }
 
     private void setAttributeStatus() {
+        if(fishShader ==null) return ;
         GLES20.glUseProgram( fishShader.getShaderProgramId() );
 
         float kColorConversion420[] = {
@@ -174,6 +176,7 @@ public class FourEye360 {
     }
 
     private void draw(){
+        if(fishShader ==null) return ;
         GLES20.glUseProgram( fishShader.getShaderProgramId() );
         //将最终变换矩阵写入
 		if(indicesBuffer==null){
@@ -187,7 +190,7 @@ public class FourEye360 {
 
 
     private boolean updateTexture(@NonNull YUVFrame yuvFrame ){
-        if(yuvFrame==null)
+        if(yuvFrame==null || fishShader==null)
             return false;
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
