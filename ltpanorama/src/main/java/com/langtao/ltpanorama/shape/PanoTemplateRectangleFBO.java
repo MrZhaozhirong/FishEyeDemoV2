@@ -102,6 +102,7 @@ public class PanoTemplateRectangleFBO {
             }
             FileInputStream fis = new FileInputStream(new File(templateFileName));
             byte[] dataArray = new byte[fis.available()];
+            fis.read(dataArray);
 
             m_templateParam = PanoTemplateProc.decryptTemplate(dataArray, key);
             if (m_templateParam == null) {
