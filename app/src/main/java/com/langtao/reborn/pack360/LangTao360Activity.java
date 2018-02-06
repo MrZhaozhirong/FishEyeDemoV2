@@ -140,13 +140,24 @@ public class LangTao360Activity extends Activity {
             mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_CYLINDER);
         }
     }
-
+    public void clickLeftCruise(@SuppressLint("USELESS") View view) {
+        if(mLT360RenderMgr!=null){
+            mLT360RenderMgr.setCruiseDriection(LTRenderMode.CRUISE_LEFT);
+        }
+    }
+    public void clickRightCruise(@SuppressLint("USELESS") View view) {
+        if(mLT360RenderMgr!=null){
+            mLT360RenderMgr.setCruiseDriection(LTRenderMode.CRUISE_RIGHT);
+        }
+    }
 
     private float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
         return (float) Math.sqrt(x * x + y * y);
     }
+
+
 
     private class GLViewTouchListener implements View.OnTouchListener {
         private float oldDist;

@@ -102,9 +102,31 @@
             android:layout_height="match_parent"/>
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/third"
+        android:layout_below="@id/second"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/left_cruise"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="左转"
+            android:onClick="clickLeftCruise" />
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/right_cruise"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:text="右转"
+            android:onClick="clickRightCruise"/>
+    </LinearLayout>
 
     <RelativeLayout
-        android:layout_below="@id/second"
+        android:layout_below="@id/third"
         android:id="@+id/gl_view_container"
         android:layout_width="350dp"
         android:layout_height="350dp"/>
