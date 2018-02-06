@@ -41,6 +41,16 @@ public class TwoRectangle  {
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
         return mMVPMatrix;
     }
+    //自动旋转相关
+    private volatile boolean isNeedAutoScroll = true;
+    private volatile int direction = 0;
+    public void setAutoCruise(boolean needAutoScroll) {
+        isNeedAutoScroll = needAutoScroll;
+    }
+
+    public void setCruiseDirection(int direction) {
+        this.direction = direction;
+    }
     //***************************************************************
     private int mSurfaceWidth;
     private int mSurfaceHeight;
@@ -224,11 +234,19 @@ public class TwoRectangle  {
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+        if (isNeedAutoScroll) {
+            if(direction == 0) mShaderOffsetX = mShaderOffsetX+1.0f;
+            else  mShaderOffsetX = mShaderOffsetX-1.0f;
+        }
         if (this.isInitialized) {
             updateTexture(frame);
             updateRectangleMatrix();
             setAttributeStatus();
             this.draw();
+        }
+        if (isNeedAutoScroll) {
+            if(direction == 0) mShaderOffsetX = mShaderOffsetX-1.0f;
+            else  mShaderOffsetX = mShaderOffsetX+1.0f;
         }
     }
 

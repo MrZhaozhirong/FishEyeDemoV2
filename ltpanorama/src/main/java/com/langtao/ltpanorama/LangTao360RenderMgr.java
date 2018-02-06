@@ -266,5 +266,18 @@ public class LangTao360RenderMgr extends LTRenderManager   {
             fourEye.setAutoCruise(autoCruise);
         if (cylinder != null)
             cylinder.setAutoCruise(autoCruise);
+        if (rectangle != null)
+            rectangle.setAutoCruise(autoCruise);
+    }
+
+    public void setCruiseDriection(int direction) {
+        if (bowl != null)
+            bowl.setCruiseDirection(direction);
+        if (fourEye != null)
+            fourEye.setCruiseDirection(direction);
+        if (cylinder != null)
+            cylinder.setCruiseDirection(direction);
+        if (rectangle != null)
+            rectangle.setCruiseDirection(direction);
     }
 }

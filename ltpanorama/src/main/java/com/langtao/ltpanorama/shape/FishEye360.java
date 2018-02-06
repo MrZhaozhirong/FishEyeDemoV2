@@ -314,6 +314,7 @@ public class FishEye360 {
     private volatile boolean pullupInertia_isStop = true;
     //自动旋转相关
     private volatile boolean isNeedAutoScroll = false;
+    private volatile int direction = 0;
     private volatile boolean operating = false;
     private Timer timer;
     private TimerTask autoScrollTimerTask = new TimerTask() {
@@ -326,7 +327,11 @@ public class FishEye360 {
 
     private void autoRotated() {
         if (operating) return;
-        this.mfingerRotationX -= 0.2f;
+        if(direction == 0)
+            this.mfingerRotationX -= 0.2f;
+        else
+            this.mfingerRotationX += 0.2f;
+
         if (this.mfingerRotationX > 360 || this.mfingerRotationX < -360) {
             this.mfingerRotationX = this.mfingerRotationX % 360;
         }
@@ -599,5 +604,7 @@ public class FishEye360 {
         this.isNeedAutoScroll = autoCruise;
     }
 
-
+    public void setCruiseDirection(int direction) {
+        this.direction = direction;
+    }
 }

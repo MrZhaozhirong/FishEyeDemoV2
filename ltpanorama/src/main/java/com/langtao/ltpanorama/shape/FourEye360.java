@@ -389,8 +389,6 @@ public class FourEye360 {
     private float[] mMatrixFingerRotationZ = new float[16];
     private volatile boolean gestureInertia_isStop = true;
     private volatile boolean pullupInertia_isStop = true;
-    private volatile boolean operating = false;
-    private volatile boolean isNeedAutoScroll = false;
     public void resetMatrixStatus(){
         mfingerRotationX = 0;
         mfingerRotationY = 0;
@@ -401,6 +399,10 @@ public class FourEye360 {
     }
     //*****************************************************************
     //自动旋转相关
+
+    private volatile boolean operating = false;
+    private volatile boolean isNeedAutoScroll = false;
+    private volatile int direction = 0;
     private Timer timer;
     private TimerTask autoScrollTimerTask = new TimerTask(){
         @Override
@@ -411,7 +413,11 @@ public class FourEye360 {
     };
     private void autoRotated(){
         if(operating) return;
-        this.mfingerRotationX -= 0.1f;
+        if(direction == 0)
+            this.mfingerRotationX -= 0.1f;
+        else
+            this.mfingerRotationX += 0.1f;
+
         if(this.mfingerRotationX > 360 || this.mfingerRotationX < -360){
             this.mfingerRotationX = this.mfingerRotationX % 360;
         }
@@ -517,5 +523,7 @@ public class FourEye360 {
     public void setAutoCruise(boolean autoCruise) {
         this.isNeedAutoScroll = autoCruise;
     }
-
+    public void setCruiseDirection(int direction) {
+        this.direction = direction;
+    }
 }

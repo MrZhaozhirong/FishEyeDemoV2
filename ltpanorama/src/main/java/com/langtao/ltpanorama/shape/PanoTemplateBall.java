@@ -189,7 +189,7 @@ public class PanoTemplateBall {
     private void createBufferData() {
         if(out == null){
             try{
-                out = PanoTemplateProc.panoramaSphere();
+                out = PanoTemplateProc.panoramaSphereES();
             }catch ( Exception e){
                 e.printStackTrace();
                 return;

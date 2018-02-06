@@ -55,7 +55,7 @@ public class Cylinder {
         Matrix.setIdentityM(this.mViewMatrix, 0);
 
         eye = new CameraViewport();
-        eye.setCameraVector(0, 0, 125.0f);
+        eye.setCameraVector(0, 0, 95.0f);
         eye.setTargetViewVector(0f, 0f, 0.0f);
         eye.setCameraUpVector(0f, 1.0f, 0.0f);
 
@@ -191,7 +191,7 @@ public class Cylinder {
                 (float) overture, ratio, 0.1f, 1000.0f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
-                            0, 0, 125.0f, //摄像机位置
+                            0, 0, 95.0f, //摄像机位置
                             0f, 0f, 0.0f, //摄像机目标视点
                             0f, 1.0f, 0.0f);//摄像机头顶方向向量
     }
@@ -299,6 +299,7 @@ public class Cylinder {
     //自动巡航相关
     private volatile boolean isNeedAutoScroll = false;
     private volatile boolean operating = false;
+    private volatile int direction = 0;
     private Timer timer;
     private TimerTask autoScrollTimerTask = new TimerTask() {
         @Override
@@ -310,7 +311,11 @@ public class Cylinder {
 
     private void autoRotated() {
         if (operating) return;
-        this.mfingerRotationX -= 0.2f;
+        if(direction == 0)
+            this.mfingerRotationX -= 0.2f;
+        else
+            this.mfingerRotationX += 0.2f;
+
         if (this.mfingerRotationX > 360 || this.mfingerRotationX < -360) {
             this.mfingerRotationX = this.mfingerRotationX % 360;
         }
@@ -352,7 +357,7 @@ public class Cylinder {
         float mYVelocity = yVelocity / 8000f;
         //Log.w(TAG,"xVelocity : "+xVelocity);
         while (!this.gestureInertia_isStop) {
-            double offsetX = -mXVelocity;
+            double offsetX = +mXVelocity;
             this.mfingerRotationX += offsetX;
             //----------------------------------------------------------------------------
             if (Math.abs(mXVelocity - 0.995f * mXVelocity) < 0.00000001f) {
@@ -370,8 +375,8 @@ public class Cylinder {
     public void handleTouchMove(float x, float y) {
         float offsetX = this.mLastX - x;
         float offsetY = this.mLastY - y;
-        this.mfingerRotationY += offsetY / 10;
-        this.mfingerRotationX += offsetX / 10;
+        this.mfingerRotationY -= offsetY / 10;
+        this.mfingerRotationX -= offsetX / 10;
 
         if (this.mfingerRotationY > 16.3f) {
             this.mfingerRotationY = 16.3f;
@@ -391,7 +396,7 @@ public class Cylinder {
     private float zoomTimes = 0.0f;  //放大缩小
 
     public void handleMultiTouch(float distance) {
-        float dis = distance ;
+        float dis = distance ; 
         float scale;
         if (dis < 0) {
             //小于0 两点距离比前一刻的两点距离短 在缩小
@@ -415,10 +420,17 @@ public class Cylinder {
         Matrix.translateM(this.mViewMatrix, 0, 0f, 0f, scale);
 
         eye.setCameraVector(eye.cx, eye.cy, this.mViewMatrix[14]);
+
+        Log.w(TAG, "current CameraEye : " + "\n" +
+                eye.cx + " " + eye.cy + " " + eye.cz + "\n" +
+                eye.tx + " " + eye.ty + " " + eye.tz + "\n" +
+                eye.upx + " " + eye.upy + " " + eye.upz + "\n");
     }
 
     public void setAutoCruise(boolean autoCruise) {
         this.isNeedAutoScroll = autoCruise;
     }
-
+    public void setCruiseDirection(int direction) {
+        this.direction = direction;
+    }
 }

@@ -6,6 +6,8 @@ package com.langtao.ltpanorama.shape;
 
 public class LTRenderMode {
 
+    public static final int CRUISE_LEFT = 0;
+    public static final int CRUISE_RIGHT = 1;
 
     public static final int RENDER_MODE_360 = 360;
     public static final int RENDER_MODE_FOUR_EYE = 360*4;       //1440
