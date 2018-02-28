@@ -142,12 +142,12 @@ public class LangTao360Activity extends Activity {
     }
     public void clickLeftCruise(@SuppressLint("USELESS") View view) {
         if(mLT360RenderMgr!=null){
-            mLT360RenderMgr.setCruiseDriection(LTRenderMode.CRUISE_LEFT);
+            mLT360RenderMgr.setCruiseDirection(LTRenderMode.CRUISE_LEFT);
         }
     }
     public void clickRightCruise(@SuppressLint("USELESS") View view) {
         if(mLT360RenderMgr!=null){
-            mLT360RenderMgr.setCruiseDriection(LTRenderMode.CRUISE_RIGHT);
+            mLT360RenderMgr.setCruiseDirection(LTRenderMode.CRUISE_RIGHT);
         }
     }
 
