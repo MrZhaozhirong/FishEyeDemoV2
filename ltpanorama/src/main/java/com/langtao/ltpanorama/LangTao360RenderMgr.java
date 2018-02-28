@@ -270,7 +270,7 @@ public class LangTao360RenderMgr extends LTRenderManager   {
             rectangle.setAutoCruise(autoCruise);
     }
 
-    public void setCruiseDriection(int direction) {
+    public void setCruiseDirection(int direction) {
         if (bowl != null)
             bowl.setCruiseDirection(direction);
         if (fourEye != null)
