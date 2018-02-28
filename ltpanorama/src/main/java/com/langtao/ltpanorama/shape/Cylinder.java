@@ -197,10 +197,12 @@ public class Cylinder {
     }
 
     public void onDrawFrame(@NonNull YUVFrame frame) {
-        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        GLES20.glCullFace(GLES20.GL_BACK);
-        GLES20.glEnable(GLES20.GL_CULL_FACE);
+        GLES20.glClear( GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+
+        //GLES20.glCullFace(GLES20.GL_BACK);
+        //GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
         if (this.isInitialized) {
             updateTexture(frame);
@@ -375,7 +377,7 @@ public class Cylinder {
     public void handleTouchMove(float x, float y) {
         float offsetX = this.mLastX - x;
         float offsetY = this.mLastY - y;
-        this.mfingerRotationY -= offsetY / 10;
+        this.mfingerRotationY -= offsetY / 50;
         this.mfingerRotationX -= offsetX / 10;
 
         if (this.mfingerRotationY > 16.3f) {

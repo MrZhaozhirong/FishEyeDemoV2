@@ -60,7 +60,7 @@ public class FishEye360 {
 
         eye = new CameraViewport();
 
-        eye.setCameraVector(0, 0, -3f);
+        eye.setCameraVector(0, 0, -2.5f);
         eye.setTargetViewVector(0f, 0f, 0.0f);
         eye.setCameraUpVector(0f, 1.0f, 0.0f);
 
@@ -111,7 +111,7 @@ public class FishEye360 {
                 (float) overture, ratio, 0.1f, 100f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
-                0, 0, -3f, //摄像机位置
+                0, 0, -2.5f, //摄像机位置
                 0f, 0f, 0.0f, //摄像机目标视点
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
     }
@@ -494,7 +494,7 @@ public class FishEye360 {
 
     private boolean transformToOverlook() {
         boolean viewTransforming = true;
-        if (eye.cz > -3.000001f) {
+        if (eye.cz > -2.500001f) {
             Matrix.setLookAtM(mViewMatrix, 0,
                     eye.cx, eye.cy, eye.cz -= 0.002f,
                     eye.tx, eye.ty, eye.tz,
@@ -553,7 +553,7 @@ public class FishEye360 {
         float dis = distance / 10;
         float scale;
         if (dis < 0) {
-            if(eye.cz > -3.0f) {
+            if(eye.cz > -2.5f) {
                 // 还没到俯视最值，还能放大视野，缩小视图
                 scale = -0.1f;
                 this.zoomTimes -= 0.1;
@@ -581,7 +581,7 @@ public class FishEye360 {
             // 内窥
             currentPerspectiveMode = MODE_ENDOSCOPE;
         }
-        if(eye.cz < -3.0f ) {
+        if(eye.cz < -2.5f ) {
             // 俯视
             currentPerspectiveMode = MODE_OVER_LOOK;
         }
