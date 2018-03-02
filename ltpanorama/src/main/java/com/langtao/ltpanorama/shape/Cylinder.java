@@ -31,15 +31,18 @@ public class Cylinder {
         System.loadLibrary("LTFishEyeProc");
     }
     private static final String TAG = "FishEye360";
-    private final static double overture = 1.2f;
+    private final static double overture = 50f;
     private float[] mProjectionMatrix = new float[16];// 4x4矩阵 存储投影矩阵
     private float[] mViewMatrix = new float[16]; // 摄像机位置朝向9参数矩阵
     private float[] mModelMatrix = new float[16];// 模型变换矩阵
     private float[] mMVPMatrix = new float[16];// 获取具体物体的总变换矩阵
 
+    private float[] mVMMatrix = new float[16];
+
     private float[] getFinalMatrix() {
-        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+
+        Matrix.multiplyMM(mVMMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mVMMatrix, 0);
         return mMVPMatrix;
     }
     //***************************************************************
@@ -49,15 +52,15 @@ public class Cylinder {
     private int mFrameHeight;
     public CameraViewport eye;
 
+
     public Cylinder() {
         Matrix.setIdentityM(this.mModelMatrix, 0);
         Matrix.setIdentityM(this.mProjectionMatrix, 0);
         Matrix.setIdentityM(this.mViewMatrix, 0);
+        Matrix.setIdentityM(this.mVMMatrix, 0);
+        Matrix.setIdentityM(this.mMVPMatrix, 0);
 
         eye = new CameraViewport();
-        eye.setCameraVector(0, 0, 95.0f);
-        eye.setTargetViewVector(0f, 0f, 0.0f);
-        eye.setCameraUpVector(0f, 1.0f, 0.0f);
 
         timer = new Timer();
         timer.schedule(autoScrollTimerTask, 5000, 10000);
@@ -184,25 +187,29 @@ public class Cylinder {
     public void onSurfaceChange(int width, int height) {
         float ratio = (float) width / (float) height;
         resetMatrixStatus();
-        this.mfingerRotationY = -16f;
+
         mSurfaceWidth = width;
         mSurfaceHeight= height;
         MatrixHelper.perspectiveM(this.mProjectionMatrix,
                 (float) overture, ratio, 0.1f, 1000.0f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
-                            0, 0, 95.0f, //摄像机位置
+                            0, 0, 2.7f, //摄像机位置
                             0f, 0f, 0.0f, //摄像机目标视点
                             0f, 1.0f, 0.0f);//摄像机头顶方向向量
+
+        eye.setCameraVector(0, 0, 2.7f);
+        eye.setTargetViewVector(0f, 0f, 0.0f);
+        eye.setCameraUpVector(0f, 1.0f, 0.0f);
+
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glCullFace(GLES20.GL_BACK);
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
     }
 
     public void onDrawFrame(@NonNull YUVFrame frame) {
-        GLES20.glClear( GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT);
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
-        //GLES20.glCullFace(GLES20.GL_BACK);
-        //GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
         if (this.isInitialized) {
             updateTexture(frame);
@@ -255,8 +262,6 @@ public class Cylinder {
     }
 
     private void updateCylinderMatrix() {
-        Matrix.setIdentityM(this.mModelMatrix, 0);
-        Matrix.scaleM(this.mModelMatrix, 0, 1.0f, 1.0f, 1.0f);
 
         Matrix.setIdentityM(this.mMatrixFingerRotationX, 0);
         Matrix.setIdentityM(this.mMatrixFingerRotationY, 0);
@@ -380,32 +385,61 @@ public class Cylinder {
         this.mfingerRotationY -= offsetY / 50;
         this.mfingerRotationX -= offsetX / 10;
 
-        if (this.mfingerRotationY > 16.3f) {
-            this.mfingerRotationY = 16.3f;
+        if (this.mfingerRotationY > 30.0f) {
+            this.mfingerRotationY = 30.0f;
         }
-        if (this.mfingerRotationY < -16.3f) {
-            this.mfingerRotationY = -16.3f;
+        if (this.mfingerRotationY < -30.0f) {
+            this.mfingerRotationY = -30.0f;
         }
 
-        //Log.w(TAG, "mfingerRotationY : " + this.mfingerRotationY);
+        Log.w(TAG, "mfingerRotationY : " + this.mfingerRotationY);
         this.mLastX = x;
         this.mLastY = y;
         operating = true;
     }
 
-    private final static float OVERLOOK_SCALE_MAX_VALUE = 30f;
-    private final static float OVERLOOK_SCALE_MIN_VALUE = 00f;
+    private final static float OVERLOOK_SCALE_MAX_VALUE = 15f;
+    private final static float OVERLOOK_SCALE_MIN_VALUE = 0f;
     private float zoomTimes = 0.0f;  //放大缩小
 
+//    public void handleMultiTouch(float distance) {
+//
+//        if (distance < 0) {
+//            //小于0 两点距离比前一刻的两点距离短 在缩小
+//            this.zoomTimes += -1.0f;
+//        } else {
+//            this.zoomTimes += 1.0f;
+//        }
+//
+//        Matrix.scaleM(this.mModelMatrix, 0, this.zoomTimes, this.zoomTimes, this.zoomTimes);
+//
+//        Log.w(TAG, "this.mProjectionMatrix : " + "\n" +
+//                mProjectionMatrix[0]+" "+mProjectionMatrix[4]+" "+mProjectionMatrix[8] +" "+mProjectionMatrix[12]+"\n" +
+//                mProjectionMatrix[1]+" "+mProjectionMatrix[5]+" "+mProjectionMatrix[9] +" "+mProjectionMatrix[13]+"\n" +
+//                mProjectionMatrix[2]+" "+mProjectionMatrix[6]+" "+mProjectionMatrix[10]+" "+mProjectionMatrix[14]+"\n" +
+//                mProjectionMatrix[3]+" "+mProjectionMatrix[7]+" "+mProjectionMatrix[11]+" "+mProjectionMatrix[15]+"\n");
+//        Log.w(TAG, "this.mViewMatrix : " + "\n" +
+//                this.mViewMatrix[0]+" "+this.mViewMatrix[4]+" "+this.mViewMatrix[8] +" "+this.mViewMatrix[12]+"\n" +
+//                this.mViewMatrix[1]+" "+this.mViewMatrix[5]+" "+this.mViewMatrix[9] +" "+this.mViewMatrix[13]+"\n" +
+//                this.mViewMatrix[2]+" "+this.mViewMatrix[6]+" "+this.mViewMatrix[10]+" "+this.mViewMatrix[14]+"\n" +
+//                this.mViewMatrix[3]+" "+this.mViewMatrix[7]+" "+this.mViewMatrix[11]+" "+this.mViewMatrix[15]+"\n");
+//        Log.w(TAG, "this.mModelMatrix : " + "\n" +
+//                this.mModelMatrix[0]+" "+this.mModelMatrix[4]+" "+this.mModelMatrix[8] +" "+this.mModelMatrix[12]+"\n" +
+//                this.mModelMatrix[1]+" "+this.mModelMatrix[5]+" "+this.mModelMatrix[9] +" "+this.mModelMatrix[13]+"\n" +
+//                this.mModelMatrix[2]+" "+this.mModelMatrix[6]+" "+this.mModelMatrix[10]+" "+this.mModelMatrix[14]+"\n" +
+//                this.mModelMatrix[3]+" "+this.mModelMatrix[7]+" "+this.mModelMatrix[11]+" "+this.mModelMatrix[15]+"\n");
+//        Log.w(TAG, "\n\n");
+//    }
+
     public void handleMultiTouch(float distance) {
-        float dis = distance ; 
+        float dis = distance ;
         float scale;
         if (dis < 0) {
             //小于0 两点距离比前一刻的两点距离短 在缩小
-            scale = -1.0f;
+            scale = -0.1f;
             this.zoomTimes -= 1.0;
         } else {
-            scale = 1.0f;
+            scale = 0.1f;
             this.zoomTimes += 1.0;
         }
 
