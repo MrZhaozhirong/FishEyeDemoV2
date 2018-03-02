@@ -58,6 +58,7 @@ public class PanoTemplateBall {
     public PanoTemplateBall(int render_mode){
         resetMatrixStatus();
         initCameraEye(render_mode);
+        mfingerRotationY = 180f;
     }
 
 

@@ -51,6 +51,7 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         bowl.onSurfaceChange(width, height);
         fourEye.onSurfaceChange(width, height);
         rectangle.onSurfaceChange(width, height);
+        //1080 x 1794
         cylinder.onSurfaceChange(width, height);
 
         curvedPlate.onSurfaceChange(width, height);
