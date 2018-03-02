@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -15,9 +16,13 @@ import android.widget.Toast;
 
 import com.langtao.device.SDKinitUtil;
 import com.langtao.ltpanorama.LangTao360RenderMgr;
+import com.langtao.ltpanorama.component.YUVFrame;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.reborn.R;
 import com.langtao.reborn.pack180.Glnk180DataSourceListenerImpl;
+
+import java.io.File;
+import java.io.FileOutputStream;
 
 import glnk.client.GlnkClient;
 import glnk.media.AViewRenderer;
@@ -157,8 +162,6 @@ public class LangTao360Activity extends Activity {
         return (float) Math.sqrt(x * x + y * y);
     }
 
-
-
     private class GLViewTouchListener implements View.OnTouchListener {
         private float oldDist;
         private int mode = 0;
@@ -283,6 +286,9 @@ public class LangTao360Activity extends Activity {
                     //Log.i(TAG, "mLT360RenderMgr  add_buffer !!!");
                     mLT360RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
                 }
+                if(requestDumpYuv){
+                    new DumpYUVFrameFile(width,height,byYdata,byUdata,byVdata,"dump_video.yuv").start();
+                }
             }
         });
 
@@ -314,6 +320,64 @@ public class LangTao360Activity extends Activity {
             //里面已经会把source也stop
             player.release();
             player = null;
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private volatile boolean requestDumpYuv = false;
+
+    public void clickDumpYuv(@SuppressLint("USELESS") View view) {
+        requestDumpYuv = true;
+    }
+
+    private volatile String PanoramaScreenshot_path = Environment.getExternalStorageDirectory().getPath();
+
+    private class DumpYUVFrameFile extends Thread{
+        private final YUVFrame frame;
+        private final String fileName;
+        public DumpYUVFrameFile(YUVFrame frame,String fileName){
+            this.frame = frame;
+            this.fileName = fileName;
+            requestDumpYuv = false;
+        }
+        public DumpYUVFrameFile(int width, int height,
+                                byte[] byYdata, byte[] byUdata, byte[] byVdata,
+                                String fileName){
+            YUVFrame yuvFrame = new YUVFrame();
+            yuvFrame.setYDataBuffer(byYdata);
+            yuvFrame.setUDataBuffer(byUdata);
+            yuvFrame.setVDataBuffer(byVdata);
+            yuvFrame.setWidth(width);
+            yuvFrame.setHeight(height);
+            this.frame = yuvFrame;
+            this.fileName = fileName;
+            requestDumpYuv = false;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            String filename = PanoramaScreenshot_path+"/"+fileName;
+            Log.d(TAG, "dump yuv file : "+filename);
+            try {
+                File file = new File(filename);
+                if(file.exists()) {
+                    boolean delete = file.delete();
+                    if(delete) {
+                        FileOutputStream fos = new FileOutputStream(file,false);
+                        fos.write(frame.getYuvbyte());
+                        fos.close();
+                    }
+                } else {
+                    FileOutputStream fos = new FileOutputStream(file,false);
+                    fos.write(frame.getYuvbyte());
+                    fos.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

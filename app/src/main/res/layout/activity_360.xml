@@ -123,12 +123,21 @@
             android:layout_height="wrap_content"
             android:text="右转"
             android:onClick="clickRightCruise"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/dump_yuv"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="dump yuv"
+            android:onClick="clickDumpYuv" />
     </LinearLayout>
 
     <RelativeLayout
         android:layout_below="@id/third"
         android:id="@+id/gl_view_container"
-        android:layout_width="350dp"
-        android:layout_height="350dp"/>
+        android:layout_width="400dp"
+        android:layout_height="400dp"/>
 
 </RelativeLayout>
