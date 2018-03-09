@@ -75,9 +75,9 @@
             android:layout_height="match_parent"/>
         <Button
             android:id="@+id/four_fish_eye_360"
-            android:layout_width="70dp"
+            android:layout_width="55dp"
             android:layout_height="wrap_content"
-            android:text="四分屏"
+            android:text="四屏"
             android:onClick="clickFour360"/>
         <Space
             android:layout_width="2dp"
@@ -93,10 +93,19 @@
             android:layout_height="match_parent"/>
         <Button
             android:id="@+id/cylinder"
-            android:layout_width="90dp"
+            android:layout_width="55dp"
             android:layout_height="wrap_content"
-            android:text="圆柱形"
+            android:text="圆柱"
             android:onClick="clickCylinder"/>
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/mode_180"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="180"
+            android:onClick="clickMode180"/>
         <Space
             android:layout_width="2dp"
             android:layout_height="match_parent"/>
@@ -119,7 +128,7 @@
             android:layout_height="match_parent"/>
         <Button
             android:id="@+id/right_cruise"
-            android:layout_width="70dp"
+            android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="右转"
             android:onClick="clickRightCruise"/>
@@ -128,7 +137,7 @@
             android:layout_height="match_parent"/>
         <Button
             android:id="@+id/dump_yuv"
-            android:layout_width="120dp"
+            android:layout_width="112dp"
             android:layout_height="wrap_content"
             android:text="dump yuv"
             android:onClick="clickDumpYuv" />

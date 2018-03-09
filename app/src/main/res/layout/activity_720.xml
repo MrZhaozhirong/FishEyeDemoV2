@@ -57,12 +57,17 @@
             <Space
                 android:layout_width="2dp"
                 android:layout_height="match_parent"/>
-
+            <Button
+                android:id="@+id/local_config_file"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="本地配置"
+                android:onClick="localPanoramaConfig" />
             <Button
                 android:id="@+id/download_config_file"
-                android:layout_width="110dp"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:text="下载全景配置"
+                android:text="下载配置"
                 android:onClick="downloadPanoramaConfig" />
         </LinearLayout>
 

@@ -145,6 +145,11 @@ public class LangTao360Activity extends Activity {
             mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_CYLINDER);
         }
     }
+    public void clickMode180(@SuppressLint("USELESS") View view) {
+        if(mLT360RenderMgr!=null){
+            mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180);
+        }
+    }
     public void clickLeftCruise(@SuppressLint("USELESS") View view) {
         if(mLT360RenderMgr!=null){
             mLT360RenderMgr.setCruiseDirection(LTRenderMode.CRUISE_LEFT);
