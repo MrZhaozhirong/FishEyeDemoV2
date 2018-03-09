@@ -17,8 +17,6 @@ import com.langtao.ltpanorama.utils.MatrixHelper;
 import com.langtao.ltpanorama.utils.TextureHelper;
 
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by zzr on 2017/8/16.
@@ -60,22 +58,22 @@ public class FishEye360 {
 
         eye = new CameraViewport();
 
-        eye.setCameraVector(0, 0, -2.5f);
+        eye.setCameraVector(0, 0, -2.6f);
         eye.setTargetViewVector(0f, 0f, 0.0f);
         eye.setCameraUpVector(0f, 1.0f, 0.0f);
 
-        if(timer==null)
-            timer = new Timer();
-        if(autoScrollTimerTask==null) {
-            autoScrollTimerTask = new TimerTask() {
-                @Override
-                public void run() {
-                    isNeedAutoScroll = true;
-                    operating = false;
-                }
-            };
-        }
-        timer.schedule(autoScrollTimerTask, 5000, 10000);
+        //if(timer==null)
+        //    timer = new Timer();
+        //if(autoScrollTimerTask==null) {
+        //    autoScrollTimerTask = new TimerTask() {
+        //        @Override
+        //        public void run() {
+        //            isNeedAutoScroll = true;
+        //            operating = false;
+        //        }
+        //    };
+        //}
+        //timer.schedule(autoScrollTimerTask, 5000, 10000);
     }
 
     //================================建模视频帧相关==============================================================
@@ -111,7 +109,7 @@ public class FishEye360 {
                 (float) overture, ratio, 0.1f, 100f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
-                0, 0, -2.5f, //摄像机位置
+                0, 0, -2.6f, //摄像机位置
                 0f, 0f, 0.0f, //摄像机目标视点
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
     }
@@ -316,14 +314,14 @@ public class FishEye360 {
     private volatile boolean isNeedAutoScroll = false;
     private volatile int direction = 0;
     private volatile boolean operating = false;
-    private Timer timer;
-    private TimerTask autoScrollTimerTask = new TimerTask() {
-        @Override
-        public void run() {
-            isNeedAutoScroll = true;
-            operating = false;
-        }
-    };
+    //private Timer timer;
+    //private TimerTask autoScrollTimerTask = new TimerTask() {
+    //    @Override
+    //    public void run() {
+    //        isNeedAutoScroll = true;
+    //        operating = false;
+    //    }
+    //};
 
     private void autoRotated() {
         if (operating) return;
@@ -343,9 +341,9 @@ public class FishEye360 {
         this.mLastY = y;
         this.gestureInertia_isStop = true;
         operating = true;
-        if (timer != null) {
-            timer.purge();
-        }
+        //if (timer != null) {
+        //    timer.purge();
+        //}
     }
 
     public void handleTouchUp(final float x, final float y,
@@ -391,6 +389,7 @@ public class FishEye360 {
             }
             Thread.sleep(5);
         }
+        operating = false;
     }
 
     private void handleGestureInertia(float x, float y, float xVelocity, float yVelocity)
@@ -414,6 +413,7 @@ public class FishEye360 {
             Thread.sleep(2);
             operating = true;
         }
+        operating = false;
     }
 
     private static int MODE_OVER_LOOK = 0;
@@ -468,6 +468,7 @@ public class FishEye360 {
             @Override
             public void run() {
                 boolean transforming = true;
+                boolean bIsNeedAutoScroll = isNeedAutoScroll;
                 while (transforming) {
                     try {
                         Thread.sleep(1);
@@ -487,6 +488,7 @@ public class FishEye360 {
                         eye.upx + " " + eye.upy + " " + eye.upz + "\n");
                 updateVisionValue(eye.cz+3);
                 Log.w(TAG, "currentPerspectiveMode : "+currentPerspectiveMode);
+                isNeedAutoScroll = bIsNeedAutoScroll;
                 operating = false;
             }
         }).start();
@@ -553,7 +555,7 @@ public class FishEye360 {
         float dis = distance / 10;
         float scale;
         if (dis < 0) {
-            if(eye.cz > -2.5f) {
+            if(eye.cz > -2.6f) {
                 // 还没到俯视最值，还能放大视野，缩小视图
                 scale = -0.1f;
                 this.zoomTimes -= 0.1;
@@ -581,7 +583,7 @@ public class FishEye360 {
             // 内窥
             currentPerspectiveMode = MODE_ENDOSCOPE;
         }
-        if(eye.cz < -2.5f ) {
+        if(eye.cz < -2.6f ) {
             // 俯视
             currentPerspectiveMode = MODE_OVER_LOOK;
         }

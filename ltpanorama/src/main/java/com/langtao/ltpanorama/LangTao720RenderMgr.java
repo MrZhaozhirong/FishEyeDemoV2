@@ -7,6 +7,7 @@ import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.ltpanorama.shape.PanoTemplateBall;
 import com.langtao.ltpanorama.shape.PanoTemplateRectangleFBO;
 import com.langtao.ltpanorama.shape.PanoramaNewBall;
+import com.langtao.tmpanorama.PanoTemplateOut;
 
 import java.io.File;
 
@@ -52,6 +53,16 @@ public class LangTao720RenderMgr extends LTRenderManager {
         }
     }
 
+
+    // 测试接口 不同模板
+    private boolean bIsTest = false;
+    private PanoTemplateOut panoTemplateOut = new PanoTemplateOut();
+    public void setTestPanoTem(byte[] dataArray) {
+        panoTemplateOut.width = 400;
+        panoTemplateOut.height = 200;
+        panoTemplateOut.panoTem = dataArray;
+        bIsTest = true;
+    }
 
     // 设置 申请2:1全景图回调
     private volatile boolean requestScreenShot = false;
@@ -107,9 +118,14 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 YUVFrame buffer = mCircularBuffer.getFrame();
                 if(buffer != null){
                     if(!templateBall.isInitialized) {
-                        templateBall.onSurfaceCreated(
-                                panoTemplateConfigFile_gid,
-                                panoTemplateConfigFileName_AbsolutePath);
+                        Log.d(TAG, "bIsTest : "+bIsTest);
+                        if(bIsTest) {
+                            templateBall.onSurfaceCreated(panoTemplateOut);
+                        } else {
+                            templateBall.onSurfaceCreated(
+                                    panoTemplateConfigFile_gid,
+                                    panoTemplateConfigFileName_AbsolutePath);
+                        }
                     }
                     templateBall.updateTexture(buffer);
                 }

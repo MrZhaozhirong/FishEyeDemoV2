@@ -17,8 +17,6 @@ import com.langtao.ltpanorama.utils.MatrixHelper;
 import com.langtao.ltpanorama.utils.TextureHelper;
 
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 
 
@@ -69,12 +67,12 @@ public class FishEye180 {
         Matrix.setIdentityM(this.mViewMatrix, 0);
 
         eye = new CameraViewport();
-        eye.setCameraVector(0, 0, -2.5f);
+        eye.setCameraVector(0, 0, -2.6f);
         eye.setTargetViewVector(0f, 0f, 0.0f);
         eye.setCameraUpVector(0f, 1.0f, 0.0f);
 
-        timer = new Timer();
-        timer.schedule(autoCruiseTimerTask, 5000, 10000);
+        //timer = new Timer();
+        //timer.schedule(autoCruiseTimerTask, 5000, 10000);
     }
 
     public void onSurfaceCreate(@NonNull YUVFrame frame){
@@ -95,7 +93,7 @@ public class FishEye180 {
                 (float) overture, ratio, 0.1f, 100f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
-                0, 0, -2.5f,    //摄像机位置
+                0, 0, -2.6f,    //摄像机位置
                 0f, 0f, 0.0f,   //摄像机目标视点
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
     }
@@ -216,6 +214,7 @@ public class FishEye180 {
 
     public void onDrawFrame(YUVFrame frame) {
         if(!isInitialized) return;
+
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
         GLES20.glClearColor(0.0f,0.0f,0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
@@ -223,6 +222,7 @@ public class FishEye180 {
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         updateTexture(frame);
+        setAttributeStatus();
         this.updateCruise();
         this.updateMatrix();
         this.draw();
@@ -255,13 +255,13 @@ public class FishEye180 {
     private float zoomTimes = 0.0f;
     //自动巡航相关
     private volatile boolean isAutoCruise = true;
-    private Timer timer;
-    private TimerTask autoCruiseTimerTask = new TimerTask(){
-        @Override
-        public void run() {
-            isAutoCruise = true;
-        }
-    };
+    //private Timer timer;
+    //private TimerTask autoCruiseTimerTask = new TimerTask(){
+    //    @Override
+    //    public void run() {
+    //        isAutoCruise = true;
+    //    }
+    //};
     private int cruise_flag = 0;
     public void updateCruise() {
         if(isAutoCruise && getCurrentPerspectiveMode()==FishEye180.MODE_ENDOSCOPE){
@@ -372,7 +372,7 @@ public class FishEye180 {
         }).start();
     }
     private boolean transformToOverlook() {
-        if(eye.cz > -2.4f){
+        if(eye.cz > -2.6f){
             Matrix.setLookAtM(this.mViewMatrix,0,
                     eye.cx, eye.cy, eye.cz-=0.02f,
                     eye.tx, eye.ty, eye.tz,

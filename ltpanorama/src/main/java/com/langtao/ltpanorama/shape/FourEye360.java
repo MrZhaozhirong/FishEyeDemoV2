@@ -17,8 +17,6 @@ import com.langtao.ltpanorama.utils.MatrixHelper;
 import com.langtao.ltpanorama.utils.TextureHelper;
 
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by zzr on 2017/8/11.
@@ -71,8 +69,8 @@ public class FourEye360 {
         Matrix.setIdentityM(this.mViewMatrix, 0);
         Matrix.setIdentityM(this.mMVPMatrix, 0);
 
-        timer = new Timer();
-        timer.schedule(autoScrollTimerTask, 5000, 10000);
+        //timer = new Timer();
+        //timer.schedule(autoScrollTimerTask, 5000, 10000);
 
         splitScreenCanvas = new SplitScreenCanvas();
         fbo1 = new FrameBuffer();
@@ -403,14 +401,14 @@ public class FourEye360 {
     private volatile boolean operating = false;
     private volatile boolean isNeedAutoScroll = false;
     private volatile int direction = 0;
-    private Timer timer;
-    private TimerTask autoScrollTimerTask = new TimerTask(){
-        @Override
-        public void run() {
-            isNeedAutoScroll = true;
-            operating = false;
-        }
-    };
+    //private Timer timer;
+    //private TimerTask autoScrollTimerTask = new TimerTask(){
+    //    @Override
+    //    public void run() {
+    //        isNeedAutoScroll = true;
+    //        operating = false;
+    //    }
+    //};
     private void autoRotated(){
         if(operating) return;
         if(direction == 0)
@@ -428,9 +426,9 @@ public class FourEye360 {
         this.mLastY = y;
         this.gestureInertia_isStop = true;
         operating = true;
-        if(timer!=null){
-            timer.purge();
-        }
+        //if(timer!=null){
+        //    timer.purge();
+        //}
     }
 
     public void handleTouchUp(final float x, final float y,
@@ -478,6 +476,7 @@ public class FourEye360 {
             }
             Thread.sleep(5);
         }
+        operating = false;
     }
 
     private void handleGestureInertia(float x, float y, float xVelocity, float yVelocity)
@@ -502,6 +501,7 @@ public class FourEye360 {
                 Thread.sleep(2);
                 operating = true;
             }
+            operating = false;
     }
     public void handleTouchMove(float x, float y) {
         float offsetX = this.mLastX - x;

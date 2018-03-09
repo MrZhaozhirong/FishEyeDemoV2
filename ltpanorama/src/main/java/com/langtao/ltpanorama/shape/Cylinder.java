@@ -17,8 +17,6 @@ import com.langtao.ltpanorama.utils.MatrixHelper;
 import com.langtao.ltpanorama.utils.TextureHelper;
 
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by zzr on 2017/8/24.
@@ -62,8 +60,8 @@ public class Cylinder {
 
         eye = new CameraViewport();
 
-        timer = new Timer();
-        timer.schedule(autoScrollTimerTask, 5000, 10000);
+        //timer = new Timer();
+        //timer.schedule(autoScrollTimerTask, 5000, 10000);
     }
 
     //================================建模视频帧相关==============================================================
@@ -307,14 +305,14 @@ public class Cylinder {
     private volatile boolean isNeedAutoScroll = false;
     private volatile boolean operating = false;
     private volatile int direction = 0;
-    private Timer timer;
-    private TimerTask autoScrollTimerTask = new TimerTask() {
-        @Override
-        public void run() {
-            isNeedAutoScroll = true;
-            operating = false;
-        }
-    };
+    //private Timer timer;
+    //private TimerTask autoScrollTimerTask = new TimerTask() {
+    //    @Override
+    //    public void run() {
+    //        isNeedAutoScroll = true;
+    //        operating = false;
+    //    }
+    //};
 
     private void autoRotated() {
         if (operating) return;
@@ -333,9 +331,9 @@ public class Cylinder {
         this.mLastY = y;
         this.gestureInertia_isStop = true;
         operating = true;
-        if (timer != null) {
-            timer.purge();
-        }
+        //if (timer != null) {
+        //    timer.purge();
+        //}
     }
 
     public void handleTouchUp(final float x, final float y,
@@ -377,6 +375,7 @@ public class Cylinder {
             Thread.sleep(2);
             operating = true;
         }
+        operating = false;
     }
 
     public void handleTouchMove(float x, float y) {

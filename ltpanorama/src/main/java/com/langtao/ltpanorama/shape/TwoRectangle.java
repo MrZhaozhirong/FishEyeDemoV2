@@ -222,7 +222,7 @@ public class TwoRectangle  {
                 (float) overture, ratio, 0.1f, 400f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
-                0, 0, 3f, //摄像机位置
+                0, 0, 2.65f, //摄像机位置
                 0f, 0f, 0.0f, //摄像机目标视点
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
 

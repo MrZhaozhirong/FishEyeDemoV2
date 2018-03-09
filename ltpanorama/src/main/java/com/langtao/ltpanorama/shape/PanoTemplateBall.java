@@ -285,6 +285,25 @@ public class PanoTemplateBall {
     private int initFrameHeight;
     public volatile boolean isInitialized = false;
 
+
+    public void onSurfaceCreated(PanoTemplateOut panoTemplateOut) {
+        if(panoTemplateOut == null || panoTemplateOut.panoTem == null) return;
+        m_templateParam = panoTemplateOut;
+
+        ByteBuffer dataBuffer = ByteBuffer.allocateDirect(m_templateParam.panoTem.length )
+                .order(ByteOrder.nativeOrder());
+        dataBuffer.put(m_templateParam.panoTem);
+        dataBuffer.clear();
+        loadTemplateTexture(dataBuffer);
+        {
+            createBufferData();
+            buildProgram();
+            //initTexture(frame);
+            setAttributeStatus();
+            this.isInitialized = true;
+        }
+    }
+
     // 模板加密了
     public void onSurfaceCreated(String secretGIDStr, String templateFileName) {
         if( (templateFileName==null || "".equalsIgnoreCase(templateFileName) )
@@ -473,7 +492,7 @@ public class PanoTemplateBall {
         if(RENDER_MODE != LTRenderMode.RENDER_MODE_VR){
             targetOverture = currentOverture = CRYSTAL_OVERTURE;
             targetControlMode = currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
-            currentEye.setCameraVector(0, 0, -2f);
+            currentEye.setCameraVector(0, 0, -1.9f);
             currentEye.setTargetViewVector(0f, 0f, 0.0f);
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
             currentEye.copyTo(tartgetEye);
@@ -511,7 +530,7 @@ public class PanoTemplateBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET){
             targetOverture = CRYSTAL_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -2.0f);
+            tartgetEye.setCameraVector(0, 0, -1.9f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
@@ -550,7 +569,7 @@ public class PanoTemplateBall {
                     float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
                 }else{
-                    currentEye.setCameraVector(0, 0, -2.0f);
+                    currentEye.setCameraVector(0, 0, -1.9f);
                 }
 
                 if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
@@ -642,7 +661,7 @@ public class PanoTemplateBall {
                     float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
                 }else{
-                    currentEye.setCameraVector(0, 0, -2.0f);
+                    currentEye.setCameraVector(0, 0, -1.9f);
                 }
 
                 if( Math.abs(this.mfingerRotationX%360) > 0.0f){
@@ -939,7 +958,7 @@ public class PanoTemplateBall {
             return targetControlMode;
         if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
             targetOverture = CRYSTAL_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -2.0f);
+            tartgetEye.setCameraVector(0, 0, -1.9f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
