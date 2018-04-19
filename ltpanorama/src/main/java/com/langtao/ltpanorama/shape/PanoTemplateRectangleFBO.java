@@ -257,15 +257,14 @@ public class PanoTemplateRectangleFBO {
         double w_new = Math.sqrt(wh_total / wh_per);
         double h_new = w_new *  0.5;
 
-        double total_new = w_new * h_new;
-        while(total_new > wh_total/1.5){
-            w_new = w_new / 1.1;
-            h_new = h_new / 1.1;
-            total_new = w_new * h_new;
-        }
+        //double total_new = w_new * h_new;
+        //while(total_new > wh_total/1.5){
+        //    w_new = w_new / 1.1;
+        //    h_new = h_new / 1.1;
+        //    total_new = w_new * h_new;
+        //}
         rest[0] = (int) w_new;
-        //rest[1] = (int) h_new;
-        rest[1] = (int) w_new * 2;
+        rest[1] = (int) h_new;
         return rest;
     }
 

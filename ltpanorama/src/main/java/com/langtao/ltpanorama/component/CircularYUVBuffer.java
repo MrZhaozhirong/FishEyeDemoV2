@@ -28,7 +28,7 @@ public class CircularYUVBuffer {
 
     private YUVFrame requestFrameFromPool() {
         for (YUVFrame buffer : framePool) {
-            if (buffer.isfree) {
+            if (buffer.isFree) {
                 return buffer;
             }
         }
@@ -48,7 +48,7 @@ public class CircularYUVBuffer {
         frame.setYDataBuffer(byYdata);
         frame.setUDataBuffer(byUdata);
         frame.setVDataBuffer(byVdata);
-        frame.isfree = false;
+        frame.isFree = false;
         queue.offer(frame);
         return true;
     }

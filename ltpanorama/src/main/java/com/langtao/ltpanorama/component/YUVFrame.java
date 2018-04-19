@@ -17,11 +17,11 @@ public class YUVFrame implements Cloneable {
     private int nULen;
     private ByteBuffer vDataBuffer;
     private int nVLen;
-    public volatile boolean isfree;
+    volatile boolean isFree;
 
 
 
-    public YUVFrame() { isfree = true;}
+    public YUVFrame() { isFree = true;}
 
     public void release() {
         this.width=0;
@@ -29,7 +29,7 @@ public class YUVFrame implements Cloneable {
         yDataBuffer.clear();
         uDataBuffer.clear();
         vDataBuffer.clear();
-        isfree = true;
+        this.isFree = true;
     }
 
     public int getWidth() {

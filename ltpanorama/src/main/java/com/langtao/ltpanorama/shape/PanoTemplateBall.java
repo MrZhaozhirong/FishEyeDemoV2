@@ -58,7 +58,8 @@ public class PanoTemplateBall {
     public PanoTemplateBall(int render_mode){
         resetMatrixStatus();
         initCameraEye(render_mode);
-        mfingerRotationY = 180f;
+        mfingerRotationY = 90f;     // ->180
+        mfingerRotationX = -70f;    // ->0
     }
 
 
@@ -99,7 +100,6 @@ public class PanoTemplateBall {
         return false;
     }
 
-
     //private boolean initTemplateConfigFile(String templateFileName) {
     //    ByteBuffer dataBuffer = null;
     //    try
@@ -129,7 +129,6 @@ public class PanoTemplateBall {
     //    }
     //    return false;
     //}
-
 
     private void loadTemplateTexture(ByteBuffer dataBuffer) {
         if(dataBuffer == null) return;
@@ -284,25 +283,7 @@ public class PanoTemplateBall {
     private int initFrameWidth;
     private int initFrameHeight;
     public volatile boolean isInitialized = false;
-
-
-    public void onSurfaceCreated(PanoTemplateOut panoTemplateOut) {
-        if(panoTemplateOut == null || panoTemplateOut.panoTem == null) return;
-        m_templateParam = panoTemplateOut;
-
-        ByteBuffer dataBuffer = ByteBuffer.allocateDirect(m_templateParam.panoTem.length )
-                .order(ByteOrder.nativeOrder());
-        dataBuffer.put(m_templateParam.panoTem);
-        dataBuffer.clear();
-        loadTemplateTexture(dataBuffer);
-        {
-            createBufferData();
-            buildProgram();
-            //initTexture(frame);
-            setAttributeStatus();
-            this.isInitialized = true;
-        }
-    }
+    public volatile int frameCount = 0;
 
     // 模板加密了
     public void onSurfaceCreated(String secretGIDStr, String templateFileName) {
@@ -364,10 +345,10 @@ public class PanoTemplateBall {
                 currentEye.upx, currentEye.upy, currentEye.upz);//摄像机头顶方向向量
     }
 
-
     public boolean updateTexture(YUVFrame yuvFrame) {
         if(yuvFrame == null || pbShader == null)
             return false;
+        frameCount = frameCount++ % 0x7000ffff; //防止int越界
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
         ByteBuffer yDatabuffer = yuvFrame.getYDataBuffer();
@@ -408,7 +389,6 @@ public class PanoTemplateBall {
         GLES20.glUniform1i(pbShader.mSamplerVLoc, 2);
         return true;
     }
-
 
     public void draw(){
         if (!m_templateIsOK) {
@@ -465,7 +445,7 @@ public class PanoTemplateBall {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //================================模型变形相关=======================================================================
     private CameraViewport currentEye;
-    private CameraViewport tartgetEye;
+    private CameraViewport targetEye;
     private float currentOverture;
     private float targetOverture;
     private int currentControlMode = 0;
@@ -486,23 +466,37 @@ public class PanoTemplateBall {
     private void initCameraEye(int RENDER_MODE) {
         if(currentEye==null)
             currentEye = new CameraViewport();
-        if(tartgetEye==null)
-            tartgetEye = new CameraViewport();
+        if(targetEye==null)
+            targetEye = new CameraViewport();
 
         if(RENDER_MODE != LTRenderMode.RENDER_MODE_VR){
-            targetOverture = currentOverture = CRYSTAL_OVERTURE;
-            targetControlMode = currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
-            currentEye.setCameraVector(0, 0, -1.9f);
+            //targetOverture = currentOverture = CRYSTAL_OVERTURE;
+            //targetControlMode = currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+            //currentEye.setCameraVector(0, 0, -1.9f);
+            //currentEye.setTargetViewVector(0f, 0f, 0.0f);
+            //currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
+            //currentEye.copyTo(targetEye);
+
+            //2018.4.16 默认启动从小行星 -> 转变成全景球
+            // 当前默认小行星
+            currentOverture = ASTEROID_MAX_OVERTURE;
+            currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
+            currentEye.setCameraVector(0, 0, -1.0f);
             currentEye.setTargetViewVector(0f, 0f, 0.0f);
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
-            currentEye.copyTo(tartgetEye);
+            // 目标 全景球
+            targetOverture = CRYSTAL_OVERTURE;
+            targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+            targetEye.setCameraVector(0, 0, -1.9f);
+            targetEye.setTargetViewVector(0f, 0f, 0.0f);
+            targetEye.setCameraUpVector(0f, 1.0f, 0.0f);
         } else {
             currentControlMode = targetControlMode = LTRenderMode.RENDER_MODE_VR;
             currentOverture = targetOverture = VR_OVERTURE;
             currentEye.setCameraVector(0, 0, 0.0f);
             currentEye.setTargetViewVector(0f, 0f, 1.0f);
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
-            currentEye.copyTo(tartgetEye);
+            currentEye.copyTo(targetEye);
         }
     }
 
@@ -514,7 +508,7 @@ public class PanoTemplateBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -1.0f);
+            targetEye.setCameraVector(0, 0, -1.0f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
@@ -522,7 +516,7 @@ public class PanoTemplateBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
             targetOverture = ASTEROID_MAX_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -1.0f);
+            targetEye.setCameraVector(0, 0, -1.0f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_PLANET;
@@ -530,7 +524,7 @@ public class PanoTemplateBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET){
             targetOverture = CRYSTAL_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -1.9f);
+            targetEye.setCameraVector(0, 0, -1.9f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
@@ -565,15 +559,15 @@ public class PanoTemplateBall {
                     currentOverture = CRYSTAL_OVERTURE;
                 }
 
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                if(!currentEye.equals(targetEye)){
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
                 }else{
                     currentEye.setCameraVector(0, 0, -1.9f);
                 }
 
                 if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)){
+                        && currentEye.equals(targetEye)){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
                     this.zoomTimes = 0;
@@ -588,8 +582,8 @@ public class PanoTemplateBall {
                 }else{
                     currentOverture = ASTEROID_MIN_OVERTURE;
                 }
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                if(!currentEye.equals(targetEye)){
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz+=diff);
                     if(currentEye.cz > -1.0f)
                         currentEye.setCameraVector(0, 0, -1.0f);
@@ -598,7 +592,7 @@ public class PanoTemplateBall {
                 }
 
                 if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)){
+                        && currentEye.equals(targetEye)){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
                 }
@@ -613,8 +607,8 @@ public class PanoTemplateBall {
                     currentOverture = ASTEROID_MAX_OVERTURE;
                 }
 
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                if(!currentEye.equals(targetEye)){
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
                 }else{
                     currentEye.setCameraVector(0, 0, -1.0f);
@@ -639,7 +633,7 @@ public class PanoTemplateBall {
 
                 this.mfingerRotationY += (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
                 if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)
+                        && currentEye.equals(targetEye)
                         && MatrixHelper.beEqualTo(Math.abs(this.mfingerRotationX),90.0f) ){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
@@ -648,44 +642,52 @@ public class PanoTemplateBall {
             //从小行星切换成 水晶球
             if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET &&
                     targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
-
-                //if(currentOverture > targetOverture){
-                //    currentOverture -= (ASTEROID_MAX_OVERTURE - CRYSTAL_OVERTURE) / 30f;//2.5f;
-                //    //currentOverture += currentEye.cz*ASTEROID_MAX_OVERTURE*0.01f;
-                //}else{
-                //    currentOverture = CRYSTAL_OVERTURE;
-                //}
-                currentOverture = CRYSTAL_OVERTURE;
-
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                // 2018.4.18 新增初始化后的变换动画。
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f)) {
+                    float diff = calculateDist(this.mfingerRotationX, 0.0f, 40f);
+                    this.mfingerRotationX += diff;
+                    if(this.mfingerRotationX > 1.0f) {
+                        this.mfingerRotationX = 0.0f;
+                    }
+                } else {
+                    this.mfingerRotationX = 0.0f;
+                }
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationY, 180f)) {
+                    float diff = calculateDist(this.mfingerRotationY, 180f, 40f);
+                    this.mfingerRotationY += diff;
+                    if(this.mfingerRotationY > 180.0f) {
+                        this.mfingerRotationX = 180.0f;
+                    }
+                } else {
+                    this.mfingerRotationY = 180.0f;
+                }
+                if( !MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)) {
+                    float diff = calculateDist(currentOverture,targetOverture, 30f);
+                    this.currentOverture -= diff;
+                } else {
+                    currentOverture = CRYSTAL_OVERTURE;
+                }
+                if( !MatrixHelper.beEqualTo(currentEye.cz, targetEye.cz, 0.01f)) {
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 30f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
-                }else{
+                } else {
                     currentEye.setCameraVector(0, 0, -1.9f);
                 }
 
-                if( Math.abs(this.mfingerRotationX%360) > 0.0f){
-                    float diff = calculateDist(this.mfingerRotationX, 0.0f, 2.0f);
-                    if(this.mfingerRotationX > 0) {
-                        this.mfingerRotationX -= diff;
-                    } else {
-                        this.mfingerRotationX += diff;
-                    }
-                    if(Math.abs(this.mfingerRotationX%360) <= 1.0f){
-                        this.mfingerRotationX = 0.0f;
-                        //角度切换完毕
-                    }
-                }
-
-                this.mfingerRotationY += this.mfingerRotationX*0.25f;
-                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)
-                        && MatrixHelper.beEqualTo(Math.abs(this.mfingerRotationX), 0.0f)  ){
-                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;//切换完成
+                if( MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, 0.5f)
+                        && MatrixHelper.beEqualTo(this.mfingerRotationY, 180f, 1.0f)
+                        && MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)
+                        && MatrixHelper.beEqualTo(currentEye.cz, -1.9f, 0.01f) ) {
+                    //切换完成
+                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
                     this.zoomTimes = 0;
                 }
             }
 
+            Log.w(TAG, "targetControlMode : "+targetControlMode);
+            Log.w(TAG, "currentControlMode : "+currentControlMode);
+            Log.w(TAG, "mfingerRotationY : "+mfingerRotationY);
+            Log.w(TAG, "mfingerRotationX : "+mfingerRotationX);
             Log.w(TAG, "currentOverture : "+currentOverture);
             Log.w(TAG, "current mViewMatrix: " + "\n" +
                     currentEye.cx + " " +  currentEye.cy + " " +  currentEye.cz + "\n" +
@@ -958,7 +960,7 @@ public class PanoTemplateBall {
             return targetControlMode;
         if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
             targetOverture = CRYSTAL_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -1.9f);
+            targetEye.setCameraVector(0, 0, -1.9f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
