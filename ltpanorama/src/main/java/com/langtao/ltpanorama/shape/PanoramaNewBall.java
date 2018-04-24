@@ -32,6 +32,7 @@ public class PanoramaNewBall {
     private static final int TEXTURE_COORDIANTE_COMPONENT_COUNT = 2;
 
     public volatile boolean isInitialized = false;
+    public volatile boolean isBootAnimation = false;
     private int mSurfaceWidth;
     private int mSurfaceHeight;
     private PanoramaOut out;
@@ -100,6 +101,7 @@ public class PanoramaNewBall {
         if(PanoPicPreviewTextureId == 0) return;
         //setAttributeStatus();
         this.isInitialized = true;
+        new bootAnimationWaitThread().start();
     }
     public void onSurfaceChanged(int width, int height) {
         GLES20.glViewport(0,0,width,height);
@@ -163,6 +165,9 @@ public class PanoramaNewBall {
             GLES20.glDrawElements(GLES20.GL_TRIANGLES, numElements, GLES20.GL_UNSIGNED_INT, 0);
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
+            if (isNeedAutoScroll) {
+                autoRotated();
+            }
             GLES20.glUniformMatrix4fv(pbNewShader.uMVPMatrixLocation, 1, false, getFinalMatrix(),0);
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer.getIndexBufferId());
             GLES20.glViewport(0, 0, mSurfaceWidth, mSurfaceHeight);
@@ -175,7 +180,7 @@ public class PanoramaNewBall {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //================================模型变形相关=======================================================================
     private CameraViewport currentEye;
-    private CameraViewport tartgetEye;
+    private CameraViewport targetEye;
     private float currentOverture;
     private float targetOverture;
     private int currentControlMode = 0;
@@ -194,24 +199,39 @@ public class PanoramaNewBall {
     private static final float VR_OVERTURE = 90f;
 
     private void initCameraEye(int RENDER_MODE) {
-
-        currentEye = new CameraViewport();
-        tartgetEye = new CameraViewport();
+        if(currentEye==null)
+            currentEye = new CameraViewport();
+        if(targetEye==null)
+            targetEye = new CameraViewport();
 
         if(RENDER_MODE != LTRenderMode.RENDER_MODE_VR){
-            targetOverture = currentOverture = CRYSTAL_OVERTURE;
-            targetControlMode = currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
-            currentEye.setCameraVector(0, 0, -2f);
+            //targetOverture = currentOverture = CRYSTAL_OVERTURE;
+            //targetControlMode = currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+            //currentEye.setCameraVector(0, 0, -1.9f);
+            //currentEye.setTargetViewVector(0f, 0f, 0.0f);
+            //currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
+            //currentEye.copyTo(targetEye);
+
+            //2018.4.16 默认启动特效 从小行星 -> 转变成全景球
+            // 初始化 小行星
+            currentOverture = ASTEROID_MAX_OVERTURE;
+            currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
+            currentEye.setCameraVector(0, 0, -1.0f);
             currentEye.setTargetViewVector(0f, 0f, 0.0f);
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
-            currentEye.copyTo(tartgetEye);
+            // 目标 全景球
+            targetOverture = CRYSTAL_OVERTURE;
+            targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+            targetEye.setCameraVector(0, 0, -1.9f);
+            targetEye.setTargetViewVector(0f, 0f, 0.0f);
+            targetEye.setCameraUpVector(0f, 1.0f, 0.0f);
         } else {
             currentControlMode = targetControlMode = LTRenderMode.RENDER_MODE_VR;
             currentOverture = targetOverture = VR_OVERTURE;
             currentEye.setCameraVector(0, 0, 0.0f);
             currentEye.setTargetViewVector(0f, 0f, 1.0f);
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
-            currentEye.copyTo(tartgetEye);
+            currentEye.copyTo(targetEye);
         }
     }
 
@@ -221,7 +241,7 @@ public class PanoramaNewBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -1.0f);
+            targetEye.setCameraVector(0, 0, -1.0f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
@@ -229,7 +249,7 @@ public class PanoramaNewBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
             targetOverture = ASTEROID_MAX_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -1.0f);
+            targetEye.setCameraVector(0, 0, -1.0f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_PLANET;
@@ -237,7 +257,7 @@ public class PanoramaNewBall {
 
         if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET){
             targetOverture = CRYSTAL_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -2.0f);
+            targetEye.setCameraVector(0, 0, -2.0f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
@@ -259,6 +279,7 @@ public class PanoramaNewBall {
     public void updateBallControlMode() {
         if(currentControlMode != targetControlMode){
             updateingBallControlMode = true;
+            operating = true;
             // 2018 01 26 新增鱼眼双击还原到水晶球
             if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE &&
                     targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
@@ -272,15 +293,15 @@ public class PanoramaNewBall {
                     currentOverture = CRYSTAL_OVERTURE;
                 }
 
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                if(!currentEye.equals(targetEye)){
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
                 }else{
                     currentEye.setCameraVector(0, 0, -2.0f);
                 }
 
                 if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)){
+                        && currentEye.equals(targetEye)){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
                     this.zoomTimes = 0;
@@ -295,15 +316,15 @@ public class PanoramaNewBall {
                 }else{
                     currentOverture = ASTEROID_MIN_OVERTURE;
                 }
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                if(!currentEye.equals(targetEye)){
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz+=diff);
                 }else{
                     currentEye.setCameraVector(0, 0, -1.0f);
                 }
 
                 if(beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)){
+                        && currentEye.equals(targetEye)){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
                 }
@@ -318,8 +339,8 @@ public class PanoramaNewBall {
                     currentOverture = ASTEROID_MAX_OVERTURE;
                 }
 
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
+                if(!currentEye.equals(targetEye)){
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
                 }else{
                     currentEye.setCameraVector(0, 0, -1.0f);
@@ -344,49 +365,87 @@ public class PanoramaNewBall {
 
                 this.mfingerRotationY += (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
                 if(beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)
+                        && currentEye.equals(targetEye)
                         && beEqualTo(Math.abs(this.mfingerRotationX),90.0f) ){
                     //切换完成
                     currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
                 }
             }
             //从小行星切换成 水晶球
+//            if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET &&
+//                    targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
+//
+//                currentOverture = CRYSTAL_OVERTURE;
+//
+//                if(!currentEye.equals(targetEye)){
+//                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
+//                    currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
+//                }else{
+//                    currentEye.setCameraVector(0, 0, -2.0f);
+//                }
+//
+//                if( Math.abs(this.mfingerRotationX%360) > 0.0f){
+//                    float diff = calculateDist(this.mfingerRotationX, 0.0f, 2.0f);
+//                    if(this.mfingerRotationX > 0) {
+//                        this.mfingerRotationX -= diff;
+//                    } else {
+//                        this.mfingerRotationX += diff;
+//                    }
+//                    if(Math.abs(this.mfingerRotationX%360) <= 1.0f){
+//                        this.mfingerRotationX = 0.0f;
+//                        //角度切换完毕
+//                    }
+//                }
+//
+//                this.mfingerRotationY += this.mfingerRotationX*0.25f;
+//                if(beEqualTo(currentOverture,targetOverture)
+//                        && currentEye.equals(targetEye)
+//                        && beEqualTo(Math.abs(this.mfingerRotationX), 0.0f)  ){
+//                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;//切换完成
+//                    this.zoomTimes = 0;
+//                }
+//            }
             if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET &&
                     targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
-
-                //if(currentOverture > targetOverture){
-                //    currentOverture -= (ASTEROID_MAX_OVERTURE - CRYSTAL_OVERTURE) / 30f;//2.5f;
-                //    //currentOverture += currentEye.cz*ASTEROID_MAX_OVERTURE*0.01f;
-                //}else{
-                //    currentOverture = CRYSTAL_OVERTURE;
-                //}
-                currentOverture = CRYSTAL_OVERTURE;
-
-                if(!currentEye.equals(tartgetEye)){
-                    float diff = calculateDist(currentEye.cz, tartgetEye.cz, 8f);
-                    currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
-                }else{
-                    currentEye.setCameraVector(0, 0, -2.0f);
-                }
-
-                if( Math.abs(this.mfingerRotationX%360) > 0.0f){
-                    float diff = calculateDist(this.mfingerRotationX, 0.0f, 2.0f);
-                    if(this.mfingerRotationX > 0) {
-                        this.mfingerRotationX -= diff;
-                    } else {
-                        this.mfingerRotationX += diff;
-                    }
-                    if(Math.abs(this.mfingerRotationX%360) <= 1.0f){
+                // 2018.4.18 新增初始化后的变换动画。
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f)) {
+                    float diff = calculateDist(this.mfingerRotationX, 0.0f, 40f);
+                    this.mfingerRotationX += diff;
+                    if(this.mfingerRotationX > 1.0f) {
                         this.mfingerRotationX = 0.0f;
-                        //角度切换完毕
                     }
+                } else {
+                    this.mfingerRotationX = 0.0f;
+                }
+                float targetRotationY = getFineRotation(this.mfingerRotationY);
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationY, targetRotationY)) {
+                    float diff = calculateDist(this.mfingerRotationY, targetRotationY, 40f);
+                    this.mfingerRotationY += diff;
+                    if(this.mfingerRotationY > targetRotationY) {
+                        this.mfingerRotationY = targetRotationY;
+                    }
+                } else {
+                    this.mfingerRotationY = targetRotationY;
+                }
+                if( !MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)) {
+                    float diff = calculateDist(currentOverture,targetOverture, 30f);
+                    this.currentOverture -= diff;
+                } else {
+                    currentOverture = CRYSTAL_OVERTURE;
+                }
+                if( !MatrixHelper.beEqualTo(currentEye.cz, targetEye.cz, 0.01f)) {
+                    float diff = calculateDist(currentEye.cz, targetEye.cz, 30f);
+                    currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
+                } else {
+                    currentEye.setCameraVector(0, 0, -1.9f);
                 }
 
-                this.mfingerRotationY += this.mfingerRotationX*0.25f;
-                if(beEqualTo(currentOverture,targetOverture)
-                        && currentEye.equals(tartgetEye)
-                        && beEqualTo(Math.abs(this.mfingerRotationX), 0.0f)  ){
-                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;//切换完成
+                if( MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, 0.5f)
+                        && MatrixHelper.beEqualTo(this.mfingerRotationY, targetRotationY, 1.0f)
+                        && MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)
+                        && MatrixHelper.beEqualTo(currentEye.cz, -1.9f, 0.01f) ) {
+                    //切换完成
+                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
                     this.zoomTimes = 0;
                 }
             }
@@ -423,7 +482,16 @@ public class PanoramaNewBall {
             //        currentEye.upx + " " + currentEye.upy + " " + currentEye.upz + "\n");
             //Log.w(TAG, "=========================  " + "\n");
             updateingBallControlMode = false;
+            operating = false;
         }
+    }
+
+    private float getFineRotation(float value) {
+        if(value>=270.0f || value<=90.0f)
+            return 90.0f;
+        if(value>=90.0f && value<=270.0f)
+            return 270.0f;
+        return value;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -491,7 +559,7 @@ public class PanoramaNewBall {
     public void handleTouchUp(final float x, final float y, final float xVelocity, final float yVelocity) {
         this.mLastX = 0;
         this.mLastY = 0;
-
+        operating = false;
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -513,6 +581,7 @@ public class PanoramaNewBall {
         float mXVelocity = xVelocity;
         float mYVelocity = yVelocity;
         while(!this.gestureInertia_isStop_sync){
+            operating = true;
 //--------------------------------------------------------------------------------
             float offsetY = -mYVelocity / 2000;
             if(this.boundaryDirection == BallRollBoundaryDirection.NORMAL ) {
@@ -555,6 +624,7 @@ public class PanoramaNewBall {
             mXVelocity = 0.975f*mXVelocity;
             Thread.sleep(5);
         }
+        operating = false;
     }
 
     private double seriesMoveReturn(float mFingerRotation){
@@ -579,6 +649,7 @@ public class PanoramaNewBall {
         this.gestureInertia_isStop_sync = true;
         this.mLastX = x;
         this.mLastY = y;
+        operating = true;
     }
 
     /**
@@ -680,7 +751,7 @@ public class PanoramaNewBall {
         // fishEye -> crystal
         if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
             targetOverture = CRYSTAL_OVERTURE;
-            tartgetEye.setCameraVector(0, 0, -2.0f);
+            targetEye.setCameraVector(0, 0, -2.0f);
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
@@ -784,8 +855,46 @@ public class PanoramaNewBall {
         Log.w(TAG, "=========================  " + "\n");
     }
 
-    public void autoRotated() {
-        this.mfingerRotationY -= 0.5f;
+
+    // 初始化开机画面等待线程
+    private class bootAnimationWaitThread extends Thread {
+
+        @Override
+        public void run() {
+            super.run();
+            try {
+                Thread.sleep(1111);
+                isBootAnimation = true;
+                //Thread.sleep(5000);
+                //isNeedAutoScroll = true;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //自动旋转相关
+    private boolean isNeedAutoScroll = false;
+    private int direction = 0;
+    private volatile boolean operating = false;
+    public void setAutoCruise(boolean autoCruise) {
+        this.isNeedAutoScroll = autoCruise;
+    }
+
+    public void setCruiseDirection(int direction) {
+        this.direction = direction;
+    }
+
+    private void autoRotated() {
+        if (operating) return;
+        if(direction == 0)
+            this.mfingerRotationX -= 0.2f;
+        else
+            this.mfingerRotationX += 0.2f;
+
+        if (this.mfingerRotationX > 360 || this.mfingerRotationX < -360) {
+            this.mfingerRotationX = this.mfingerRotationX % 360;
+        }
     }
 
     /**

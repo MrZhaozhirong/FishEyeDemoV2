@@ -80,7 +80,7 @@ public class LangTao720RenderMgr extends LTRenderManager {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private PanoTemplateBall templateBall;//视频
-    private PanoTemplateRectangleFBO panoTmRender;//截图
+    private PanoTemplateRectangleFBO panoTmRender; //用于生成2:1全景图
     private PanoramaNewBall picBall; //显示静态图
 
     @Override
@@ -113,14 +113,14 @@ public class LangTao720RenderMgr extends LTRenderManager {
                     }
                     templateBall.updateTexture(buffer);
                 }
-                if(templateBall.isInitialized && templateBall.frameCount > 10) {
+                if(templateBall.isInitialized && templateBall.isBootAnimation) {
                     templateBall.updateBallControlMode();
                     //不能放在buffer！=null 因为buffer==null会造成状态切换动画的卡顿
                 }
                 templateBall.updateBallMatrix();
                 templateBall.draw();
 
-                //2:1全景图相关
+                // 请求生成 2:1全景图
                 if(requestScreenShot ) {
                     if(!panoTmRender.isInitialized ){
                         panoTmRender.onEGLSurfaceCreated(
@@ -135,11 +135,13 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 }
                 if(buffer != null) buffer.release();
             }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-
+                // 静态预览图模式
                 if(!picBall.isInitialized) {
                     picBall.onSurfaceCreated(bitmap_path);
                 }
-                picBall.updateBallControlMode();
+                if(picBall.isInitialized && templateBall.isBootAnimation) {
+                    picBall.updateBallControlMode();
+                }
                 picBall.updateBallMatrix();
                 picBall.draw();
             }else {
@@ -213,13 +215,13 @@ public class LangTao720RenderMgr extends LTRenderManager {
 
     @Override
     public void setAutoCruise(boolean autoCruise) {
-        //if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-        //    if(templateBall!=null)
-        //        templateBall.autoRotated();
-        //}else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-        //    if(picBall!=null)
-        //        picBall.autoRotated();
-        //}
+        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
+            if(templateBall!=null)
+                templateBall.setAutoCruise(autoCruise);
+        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
+            if(picBall!=null)
+                picBall.setAutoCruise(autoCruise);
+        }
     }
 
 

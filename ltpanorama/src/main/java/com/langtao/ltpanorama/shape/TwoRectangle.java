@@ -42,7 +42,7 @@ public class TwoRectangle  {
         return mMVPMatrix;
     }
     //自动旋转相关
-    private volatile boolean isNeedAutoScroll = true;
+    private volatile boolean isNeedAutoScroll = false;
     private volatile int direction = 0;
     public void setAutoCruise(boolean needAutoScroll) {
         isNeedAutoScroll = needAutoScroll;

@@ -317,7 +317,6 @@ public class PanoTemplateRectangleFBO {
         GLES20.glViewport(0, 0, fboWidth, fboHeight);
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, numElements, GLES20.GL_UNSIGNED_INT, 0);
 
-
         if( requestScreenShot ){
             GLES20.glReadPixels(0, 0, fboWidth, fboHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, imageBuf);
             if( screenShotReadyCallback != null){

@@ -36,8 +36,6 @@ public class PanoTemplateBall {
     private static final int POSITION_COORDIANTE_COMPONENT_COUNT = 3;
     private static final int TEXTURE_COORDIANTE_COMPONENT_COUNT = 2;
 
-    //自动旋转相关
-    private volatile boolean isNeedAutoScroll = false;
     private PanoramaOut out;
     private VertexBuffer verticesBuffer;
     private VertexBuffer texCoordsBuffer;
@@ -58,7 +56,6 @@ public class PanoTemplateBall {
     public PanoTemplateBall(int render_mode){
         resetMatrixStatus();
         initCameraEye(render_mode);
-        mfingerRotationY = 90f;     // ->180
         mfingerRotationX = -70f;    // ->0
     }
 
@@ -283,8 +280,7 @@ public class PanoTemplateBall {
     private int initFrameWidth;
     private int initFrameHeight;
     public volatile boolean isInitialized = false;
-    public volatile int frameCount = 0;
-
+    public volatile boolean isBootAnimation = false;
     // 模板加密了
     public void onSurfaceCreated(String secretGIDStr, String templateFileName) {
         if( (templateFileName==null || "".equalsIgnoreCase(templateFileName) )
@@ -301,6 +297,7 @@ public class PanoTemplateBall {
                 //initTexture(frame);
                 setAttributeStatus();
                 this.isInitialized = true;
+                new bootAnimationWaitThread().start();
             }
         }
     }
@@ -348,7 +345,6 @@ public class PanoTemplateBall {
     public boolean updateTexture(YUVFrame yuvFrame) {
         if(yuvFrame == null || pbShader == null)
             return false;
-        frameCount = frameCount++ % 0x7000ffff; //防止int越界
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
         ByteBuffer yDatabuffer = yuvFrame.getYDataBuffer();
@@ -430,6 +426,9 @@ public class PanoTemplateBall {
             GLES20.glDrawElements(GLES20.GL_TRIANGLES, numElements, GLES20.GL_UNSIGNED_INT, 0);
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
+            if (isNeedAutoScroll) {
+                autoRotated();
+            }
             GLES20.glUniformMatrix4fv(pbShader.mMVPMatrixLoc, 1, false, getFinalMatrix(),0);
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer.getIndexBufferId());
             GLES20.glViewport(0, 0, mSurfaceWidth, mSurfaceHeight);
@@ -477,8 +476,8 @@ public class PanoTemplateBall {
             //currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
             //currentEye.copyTo(targetEye);
 
-            //2018.4.16 默认启动从小行星 -> 转变成全景球
-            // 当前默认小行星
+            //2018.4.16 默认启动特效 从小行星 -> 转变成全景球
+            // 初始化 小行星
             currentOverture = ASTEROID_MAX_OVERTURE;
             currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
             currentEye.setCameraVector(0, 0, -1.0f);
@@ -502,10 +501,20 @@ public class PanoTemplateBall {
 
 
 
-    public int nextControlMode() {
-        if(updateingBallControlMode)
-            return targetControlMode;
+    private float calculateDist(float current, float target, float divisor) {
+        if(divisor==0) return 0;
+        float absCurrent = Math.abs(current);
+        float absTarget = Math.abs(target);
+        float diff = Math.abs(absCurrent - absTarget);
+        float dist = (float) (Math.sqrt(Math.pow(diff, 2.0)) / divisor);
+        return Math.abs(dist);
+    }
 
+    public int nextControlMode() {
+        if(updatingBallControlMode)
+            return targetControlMode;
+        this.gestureInertia_isStop_sync = true;
+        // 把惯性线程停掉
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
             targetEye.setCameraVector(0, 0, -1.0f);
@@ -528,24 +537,18 @@ public class PanoTemplateBall {
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+            deviationFromPlanetToCrystal = 5.0f;
         }
         return targetControlMode;
     }
 
-    private float calculateDist(float current, float target, float divisor) {
-        if(divisor==0) return 0;
-        float absCurrent = Math.abs(current);
-        float absTarget = Math.abs(target);
-        float diff = Math.abs(absCurrent - absTarget);
-        float dist = (float) (Math.sqrt(Math.pow(diff, 2.0)) / divisor);
-        return Math.abs(dist);
-    }
-
-    private volatile boolean updateingBallControlMode = false;
+    private volatile boolean updatingBallControlMode = false;
+    private volatile float deviationFromPlanetToCrystal = 5.0f;
 
     public void updateBallControlMode() {
         if(currentControlMode != targetControlMode){
-            updateingBallControlMode = true;
+            updatingBallControlMode = true;
+            isOperating = true;
             // 2018 01 26 新增鱼眼双击还原到水晶球
             if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE &&
                     targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
@@ -577,7 +580,7 @@ public class PanoTemplateBall {
             if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL &&
                     targetControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
 
-                if(!MatrixHelper.beEqualTo(currentOverture,targetOverture)){
+                if(!MatrixHelper.beEqualTo(currentOverture,targetOverture, 1.0f)){
                     currentOverture += (ASTEROID_MIN_OVERTURE - CRYSTAL_OVERTURE) / 20f; //1.0f;
                 }else{
                     currentOverture = ASTEROID_MIN_OVERTURE;
@@ -630,8 +633,11 @@ public class PanoTemplateBall {
                             this.mfingerRotationX = -90.0f;
                     }
                 }
-
-                this.mfingerRotationY += (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
+                if(direction == 0)
+                    this.mfingerRotationY -= (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
+                else
+                    this.mfingerRotationY += (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
+                //this.mfingerRotationY += (ASTEROID_MAX_OVERTURE-currentOverture)*0.15f;
                 if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
                         && currentEye.equals(targetEye)
                         && MatrixHelper.beEqualTo(Math.abs(this.mfingerRotationX),90.0f) ){
@@ -639,11 +645,44 @@ public class PanoTemplateBall {
                     currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
                 }
             }
+//            //旧的 从小行星切换成 水晶球
+//            if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET &&
+//                    targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
+//                currentOverture = CRYSTAL_OVERTURE;
+//
+//                if(!currentEye.equals(targetEye)){
+//                    float diff = calculateDist(currentEye.cz, targetEye.cz, 8f);
+//                    currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
+//                }else{
+//                    currentEye.setCameraVector(0, 0, -1.9f);
+//                }
+//                if( Math.abs(this.mfingerRotationX%360) > 0.0f){
+//                    float diff = calculateDist(this.mfingerRotationX, 0.0f, 2.0f);
+//                    if(this.mfingerRotationX > 0) {
+//                        this.mfingerRotationX -= diff;
+//                    } else {
+//                        this.mfingerRotationX += diff;
+//                    }
+//                    if(Math.abs(this.mfingerRotationX%360) <= 1.0f){
+//                        this.mfingerRotationX = 0.0f;
+//                        //角度切换完毕
+//                    }
+//                }
+//
+//                this.mfingerRotationY += this.mfingerRotationX*0.25f;
+//                if(MatrixHelper.beEqualTo(currentOverture,targetOverture)
+//                        && currentEye.equals(targetEye)
+//                        && MatrixHelper.beEqualTo(Math.abs(this.mfingerRotationX), 0.0f)  ){
+//                    currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;//切换完成
+//                    this.zoomTimes = 0;
+//                }
+//            }
             //从小行星切换成 水晶球
             if(currentControlMode == LTRenderMode.RENDER_MODE_PLANET &&
                     targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
                 // 2018.4.18 新增初始化后的变换动画。
-                if( !MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f)) {
+                // 垂直面的，沿着X轴的旋转角
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, 0.5f)) {
                     float diff = calculateDist(this.mfingerRotationX, 0.0f, 40f);
                     this.mfingerRotationX += diff;
                     if(this.mfingerRotationX > 1.0f) {
@@ -652,21 +691,25 @@ public class PanoTemplateBall {
                 } else {
                     this.mfingerRotationX = 0.0f;
                 }
-                if( !MatrixHelper.beEqualTo(this.mfingerRotationY, 180f)) {
-                    float diff = calculateDist(this.mfingerRotationY, 180f, 40f);
+                // 水平面的，沿着Y轴的旋转角
+                float targetRotationY = getFineRotation(this.mfingerRotationY);
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationY, targetRotationY, deviationFromPlanetToCrystal)) {
+                    float diff = calculateDist(this.mfingerRotationY, targetRotationY, 40f);
                     this.mfingerRotationY += diff;
-                    if(this.mfingerRotationY > 180.0f) {
-                        this.mfingerRotationX = 180.0f;
+                    if(this.mfingerRotationY > targetRotationY) {
+                        this.mfingerRotationY = targetRotationY-deviationFromPlanetToCrystal;
                     }
                 } else {
-                    this.mfingerRotationY = 180.0f;
+                    //this.mfingerRotationY = targetRotationY-deviationFromPlanetToCrystal;
                 }
-                if( !MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)) {
-                    float diff = calculateDist(currentOverture,targetOverture, 30f);
+                // 焦距
+                if( !MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.2f)) {
+                    float diff = calculateDist(currentOverture,targetOverture, 35f);
                     this.currentOverture -= diff;
                 } else {
                     currentOverture = CRYSTAL_OVERTURE;
                 }
+                // 距离
                 if( !MatrixHelper.beEqualTo(currentEye.cz, targetEye.cz, 0.01f)) {
                     float diff = calculateDist(currentEye.cz, targetEye.cz, 30f);
                     currentEye.setCameraVector(currentEye.cx,currentEye.cy,currentEye.cz-=diff);
@@ -675,7 +718,7 @@ public class PanoTemplateBall {
                 }
 
                 if( MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, 0.5f)
-                        && MatrixHelper.beEqualTo(this.mfingerRotationY, 180f, 1.0f)
+                        && MatrixHelper.beEqualTo(this.mfingerRotationY, targetRotationY, deviationFromPlanetToCrystal)
                         && MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)
                         && MatrixHelper.beEqualTo(currentEye.cz, -1.9f, 0.01f) ) {
                     //切换完成
@@ -719,8 +762,17 @@ public class PanoTemplateBall {
             //        currentEye.tx + " " +  currentEye.ty + " " +  currentEye.tz + "\n" +
             //        currentEye.upx + " " + currentEye.upy + " " + currentEye.upz + "\n");
             //Log.w(TAG, "=========================  " + "\n");
-            updateingBallControlMode = false;
+            updatingBallControlMode = false;
+            isOperating = false;
         }
+    }
+
+    private float getFineRotation(float value) {
+        if(value>270.0f || value<=90.0f)
+            return 90.0f;
+        if(value>90.0f && value<=270.0f)
+            return 270.0f;
+        return value;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -752,9 +804,18 @@ public class PanoTemplateBall {
         Matrix.setIdentityM(this.mModelMatrix, 0);
         Matrix.setIdentityM(this.mMatrixFingerRotationX, 0);
         Matrix.setIdentityM(this.mMatrixFingerRotationY, 0);
-        if(this.mfingerRotationY > 360f || this.mfingerRotationY < -360f){
+        if(this.mfingerRotationY < 0) {
+            this.mfingerRotationY = this.mfingerRotationY % 360.0f + 360.0f; // 使他变成正数
+        }
+        if(this.mfingerRotationY > 360f ){
             this.mfingerRotationY = this.mfingerRotationY % 360f;
         }
+
+        Log.d(TAG,"ball.mfingerRotationY : "+this.mfingerRotationY);
+
+        //if(this.mfingerRotationY > 360f || this.mfingerRotationY < -360f){
+        //    this.mfingerRotationY = this.mfingerRotationY % 360f;
+        //}
         Matrix.rotateM(this.mMatrixFingerRotationY, 0, this.mfingerRotationY, 0, 1, 0);
         Matrix.rotateM(this.mMatrixFingerRotationX, 0, this.mfingerRotationX, 1, 0, 0);
         Matrix.multiplyMM(this.mModelMatrix,0, this.mMatrixFingerRotationX,0, this.mMatrixFingerRotationY,0 );
@@ -771,7 +832,8 @@ public class PanoTemplateBall {
     public void handleTouchUp(final float x, final float y, final float xVelocity, final float yVelocity) {
         this.mLastX = 0;
         this.mLastY = 0;
-
+        isOperating = false;
+        if(updatingBallControlMode) return;
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -793,6 +855,7 @@ public class PanoTemplateBall {
         float mXVelocity = xVelocity;
         float mYVelocity = yVelocity;
         while(!this.gestureInertia_isStop_sync){
+            isOperating = true;
 //--------------------------------------------------------------------------------
             float offsetY = -mYVelocity / 2000;
             if(this.boundaryDirection == BallRollBoundaryDirection.NORMAL ) {
@@ -835,6 +898,7 @@ public class PanoTemplateBall {
             mXVelocity = 0.975f*mXVelocity;
             Thread.sleep(5);
         }
+        isOperating = false;
     }
 
     private double seriesMoveReturn(float mFingerRotation){
@@ -859,6 +923,12 @@ public class PanoTemplateBall {
         this.gestureInertia_isStop_sync = true;
         this.mLastX = x;
         this.mLastY = y;
+        isOperating = true;
+        if(currentControlMode!=targetControlMode
+                && updatingBallControlMode){
+            //在变换的过程中，把误差值变大，加快结束变换过程
+            this.deviationFromPlanetToCrystal = 20.0f;
+        }
     }
 
     /**
@@ -867,8 +937,7 @@ public class PanoTemplateBall {
      * @param y
      */
     public void handleTouchMove(float x, float y) {
-        if(updateingBallControlMode) return;
-
+        if(updatingBallControlMode) return;
         this.gestureInertia_isStop_sync = true;
         float offsetX = this.mLastX - x;
         float offsetY = this.mLastY - y;
@@ -883,16 +952,13 @@ public class PanoTemplateBall {
             this.mfingerRotationX -= temp;
         }else
         {
-            this.mfingerRotationX -= offsetY/5 ;
+            this.mfingerRotationX -= offsetY/10 ;
         }
 
         this.mfingerRotationY += offsetX/8 ;
 
         updateBallBoundary();
-        if(false){
-            Log.w(TAG,"ball.mfingerRotationY : "+this.mfingerRotationY);
-            Log.w(TAG,"ball.mfingerRotationX : "+this.mfingerRotationX);
-        }
+
         this.mLastX = x;
         this.mLastY = y;
     }
@@ -945,7 +1011,6 @@ public class PanoTemplateBall {
         }
     }
 
-
     /**
      * 双击操作
      */
@@ -953,29 +1018,29 @@ public class PanoTemplateBall {
 
     }
 
-    // 特殊处理  从鱼眼双击还原到水晶球
+    /**
+     * 特殊处理  从鱼眼双击还原到水晶球 外部调用
+     */
     public int fishEyeReturnToCrystal() {
         // fishEye -> crystal
-        if(updateingBallControlMode)
+        if(updatingBallControlMode)
             return targetControlMode;
         if(currentControlMode == LTRenderMode.RENDER_MODE_FISHEYE){
             targetOverture = CRYSTAL_OVERTURE;
             targetEye.setCameraVector(0, 0, -1.9f);
-            //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
-            //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
+            //targetEye.setTargetViewVector(0f, 0f, 0.0f);
+            //targetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
         }
         return targetControlMode;
     }
-
-
 
     /**
      * 双手操作
      * @param distance
      */
     public void handleMultiTouch(float distance) {
-        if(updateingBallControlMode) return;
+        if(updatingBallControlMode) return;
         switch (currentControlMode){
             case LTRenderMode.RENDER_MODE_CRYSTAL:
                 crystal_MultiTouch(distance);
@@ -1066,10 +1131,46 @@ public class PanoTemplateBall {
         Log.w(TAG, "=========================  " + "\n");
     }
 
+    // 初始化开机画面等待线程
+    private class bootAnimationWaitThread extends Thread {
+
+        @Override
+        public void run() {
+            super.run();
+            try {
+                Thread.sleep(1111);
+                isBootAnimation = true;
+                //Thread.sleep(5000);
+                //isNeedAutoScroll = true;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
 
 
-    public void autoRotated() {
-        this.mfingerRotationY -= 0.5f;
+    //自动旋转相关
+    private boolean isNeedAutoScroll = false;
+    private int direction = 1;
+    private volatile boolean isOperating = false;
+    public void setAutoCruise(boolean autoCruise) {
+        this.isNeedAutoScroll = autoCruise;
+    }
+
+    public void setCruiseDirection(int direction) {
+        this.direction = direction;
+    }
+
+    private void autoRotated() {
+        if (isOperating) return;
+        if(direction == 0)
+            this.mfingerRotationY -= 0.1f;
+        else
+            this.mfingerRotationY += 0.1f;
+
+        if (this.mfingerRotationY > 360 || this.mfingerRotationY < -360) {
+            this.mfingerRotationY = this.mfingerRotationY % 360;
+        }
     }
 
     /**
@@ -1089,6 +1190,9 @@ public class PanoTemplateBall {
     public void setRenderMode(int renderMode) {
         initCameraEye(renderMode);
     }
+
+
+
 
 }
 
