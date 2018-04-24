@@ -27,11 +27,12 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
 
         setContentView(R.layout.activity_home);
 
-
         findViewById(R.id.btn_720).setOnClickListener(this);
         findViewById(R.id.btn_360).setOnClickListener(this);
         findViewById(R.id.btn_180).setOnClickListener(this);
         findViewById(R.id.btn_h264).setOnClickListener(this);
+
+        findViewById(R.id.btn_test_mp).setOnClickListener(this);
 
         PermissionUtils.requestMultiPermissions(this, mPermissionGrant);
     }
@@ -88,6 +89,9 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_h264:
                 startActivity(new Intent(HomeActivity.this, RawH264Activity.class));
+                break;
+            case R.id.btn_test_mp:
+                startActivity(new Intent(HomeActivity.this, TestMultiProcessActivity.class));
                 break;
         }
     }

@@ -35,7 +35,6 @@ import com.langtao.reborn.R;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -197,23 +196,6 @@ public class LangTao720Activity extends Activity {
         if(mLT720RenderMgr!=null){
             if(mLT720RenderMgr instanceof LangTao720RenderMgr)
                 ((LangTao720RenderMgr)mLT720RenderMgr).nextModelShape();
-        }
-    }
-
-    /// Test
-    public void localPanoramaConfig(@SuppressLint("USELESS") View view) {
-        try{
-            InputStream is = getResources().openRawResource(R.raw.tem400x200);
-            byte[] dataArray = new byte[is.available()];
-            int read = is.read(dataArray);
-            Log.d(TAG, "localPanoramaConfig load tem400x200 :"+is.available());
-            Log.d(TAG, "localPanoramaConfig read tem400x200 :"+read);
-            if(mLT720RenderMgr!=null){
-                if(mLT720RenderMgr instanceof LangTao720RenderMgr)
-                    ((LangTao720RenderMgr)mLT720RenderMgr).setTestPanoTem(dataArray);
-            }
-        }catch (Exception ex){
-            ex.printStackTrace();
         }
     }
 

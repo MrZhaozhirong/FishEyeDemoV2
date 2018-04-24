@@ -2,6 +2,7 @@ package com.langtao.reborn.pack360;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,7 +23,9 @@ import com.langtao.reborn.R;
 import com.langtao.reborn.pack180.Glnk180DataSourceListenerImpl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import glnk.client.GlnkClient;
 import glnk.media.AViewRenderer;
@@ -160,12 +163,13 @@ public class LangTao360Activity extends Activity {
             mLT360RenderMgr.setCruiseDirection(LTRenderMode.CRUISE_RIGHT);
         }
     }
-
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
+    public void clickCaptureFrame(@SuppressLint("USELESS") View view){
+        if(renderer!=null){
+            new CaptureFrameFile("frame.jpg").start();
+        }
     }
+
+
 
     private class GLViewTouchListener implements View.OnTouchListener {
         private float oldDist;
@@ -263,6 +267,12 @@ public class LangTao360Activity extends Activity {
 
             return true;
         }
+    }
+
+    private float spacing(MotionEvent event) {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////   链接直播视频源   ////////////////////////////////////////////////////////////////////////
@@ -381,6 +391,55 @@ public class LangTao360Activity extends Activity {
                     fos.close();
                 }
             } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class CaptureFrameFile extends Thread {
+        private final String fileName;
+        CaptureFrameFile(String fileName){
+            this.fileName = fileName;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            String filename = PanoramaScreenshot_path+"/"+fileName;
+            Log.d(TAG, "capture frame file : "+filename);
+            try {
+                File file = new File(filename);
+                Bitmap frame = ((AViewRenderer) renderer).getFrame();
+                if(file.exists()) {
+                    boolean delete = file.delete();
+                    if(delete) {
+                        saveBitmapToPath(frame, filename);
+                    }
+                } else {
+                    saveBitmapToPath(frame, filename);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void saveBitmapToPath(Bitmap mBitmap, String path_name)  {
+            File f = new File(path_name);
+            FileOutputStream fOut = null;
+            try {
+                fOut = new FileOutputStream(f);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
+            try {
+                fOut.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                fOut.close();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

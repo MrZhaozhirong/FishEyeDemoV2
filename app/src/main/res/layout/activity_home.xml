@@ -44,6 +44,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="h264"/>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_test_mp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试多进程"/>
     </LinearLayout>
 
 

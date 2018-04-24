@@ -141,6 +141,15 @@
             android:layout_height="wrap_content"
             android:text="dump yuv"
             android:onClick="clickDumpYuv" />
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/capture_frame"
+            android:layout_width="112dp"
+            android:layout_height="wrap_content"
+            android:text="get frame"
+            android:onClick="clickCaptureFrame" />
     </LinearLayout>
 
     <RelativeLayout
