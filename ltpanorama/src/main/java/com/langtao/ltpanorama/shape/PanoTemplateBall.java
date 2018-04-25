@@ -477,6 +477,7 @@ public class PanoTemplateBall {
             //currentEye.copyTo(targetEye);
 
             //2018.4.16 默认启动特效 从小行星 -> 转变成全景球
+            updatingBallControlMode=true;
             // 初始化 小行星
             currentOverture = ASTEROID_MAX_OVERTURE;
             currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
@@ -537,7 +538,7 @@ public class PanoTemplateBall {
             //tartgetEye.setTargetViewVector(0f, 0f, 0.0f);
             //tartgetEye.setCameraUpVector(0f, 1.0f, 0.0f);
             targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
-            deviationFromPlanetToCrystal = 5.0f;
+            deviationFromPlanetToCrystal = 10.0f;
         }
         return targetControlMode;
     }
@@ -682,19 +683,21 @@ public class PanoTemplateBall {
                     targetControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
                 // 2018.4.18 新增初始化后的变换动画。
                 // 垂直面的，沿着X轴的旋转角
-                if( !MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, 0.5f)) {
+                if( !MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, deviationFromPlanetToCrystal)) {
                     float diff = calculateDist(this.mfingerRotationX, 0.0f, 40f);
-                    this.mfingerRotationX += diff;
-                    if(this.mfingerRotationX > 1.0f) {
-                        this.mfingerRotationX = 0.0f;
+                    if(Math.abs(this.mfingerRotationX) > deviationFromPlanetToCrystal) {
+                        if(this.mfingerRotationX < 0.0f)
+                            this.mfingerRotationX += diff;
+                        else
+                            this.mfingerRotationX -= diff;
                     }
                 } else {
-                    this.mfingerRotationX = 0.0f;
+                    //this.mfingerRotationX = 2.0f;
                 }
                 // 水平面的，沿着Y轴的旋转角
                 float targetRotationY = getFineRotation(this.mfingerRotationY);
                 if( !MatrixHelper.beEqualTo(this.mfingerRotationY, targetRotationY, deviationFromPlanetToCrystal)) {
-                    float diff = calculateDist(this.mfingerRotationY, targetRotationY, 40f);
+                    float diff = calculateDist(this.mfingerRotationY, targetRotationY, 30f);
                     this.mfingerRotationY += diff;
                     if(this.mfingerRotationY > targetRotationY) {
                         this.mfingerRotationY = targetRotationY-deviationFromPlanetToCrystal;
@@ -704,7 +707,7 @@ public class PanoTemplateBall {
                 }
                 // 焦距
                 if( !MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.2f)) {
-                    float diff = calculateDist(currentOverture,targetOverture, 35f);
+                    float diff = calculateDist(currentOverture,targetOverture, 40f);
                     this.currentOverture -= diff;
                 } else {
                     currentOverture = CRYSTAL_OVERTURE;
@@ -716,8 +719,8 @@ public class PanoTemplateBall {
                 } else {
                     currentEye.setCameraVector(0, 0, -1.9f);
                 }
-
-                if( MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, 0.5f)
+                Log.w(TAG, "deviationFromPlanetToCrystal : "+deviationFromPlanetToCrystal);
+                if( MatrixHelper.beEqualTo(this.mfingerRotationX, 0.0f, deviationFromPlanetToCrystal)
                         && MatrixHelper.beEqualTo(this.mfingerRotationY, targetRotationY, deviationFromPlanetToCrystal)
                         && MatrixHelper.beEqualTo(currentOverture,targetOverture, 0.5f)
                         && MatrixHelper.beEqualTo(currentEye.cz, -1.9f, 0.01f) ) {
@@ -811,8 +814,6 @@ public class PanoTemplateBall {
             this.mfingerRotationY = this.mfingerRotationY % 360f;
         }
 
-        Log.d(TAG,"ball.mfingerRotationY : "+this.mfingerRotationY);
-
         //if(this.mfingerRotationY > 360f || this.mfingerRotationY < -360f){
         //    this.mfingerRotationY = this.mfingerRotationY % 360f;
         //}
@@ -833,17 +834,18 @@ public class PanoTemplateBall {
         this.mLastX = 0;
         this.mLastY = 0;
         isOperating = false;
-        if(updatingBallControlMode) return;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    handleGestureInertia(x,y, xVelocity, yVelocity);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        if(!updatingBallControlMode) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        handleGestureInertia(x,y, xVelocity, yVelocity);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     private void handleGestureInertia(float upX, float upY, float xVelocity, float yVelocity) throws InterruptedException {
