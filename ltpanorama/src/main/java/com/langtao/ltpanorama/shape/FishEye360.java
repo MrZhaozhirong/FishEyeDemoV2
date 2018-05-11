@@ -1,5 +1,7 @@
 package com.langtao.ltpanorama.shape;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
@@ -91,6 +93,23 @@ public class FishEye360 {
     private OneFishEye360ShaderProgram fishShader;
     private int[] _yuvTextureIDs = new int[]{0};
 
+    public void onSurfaceCreate(String previewPicPathName,byte[] previewPicRawData){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;   //指定需要的是原始数据，非压缩数据
+        Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
+        if(bitmap == null){
+            throw new IllegalStateException("previewPicPathName not load in bitmap!");
+        }
+
+        createBufferData(bitmap.getWidth(),bitmap.getHeight(),previewPicRawData);
+        buildProgram();
+        initTexture(bitmap);
+        setAttributeStatus();
+        isInitialized = true;
+        bitmap.recycle();
+        bitmap = null;
+    }
+
 
     public void onSurfaceCreate(@NonNull YUVFrame frame){
         if(frame == null) return;
@@ -112,6 +131,44 @@ public class FishEye360 {
                 0, 0, -2.6f, //摄像机位置
                 0f, 0f, 0.0f, //摄像机目标视点
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
+    }
+
+    private void createBufferData(int width, int height, byte[] previewPicRawData) {
+        if (out == null) {
+            try {
+                OneFisheye360Param outParam = new OneFisheye360Param();
+                Log.w(TAG, "OneFisheye360Param rgb width&height : " + width+ "  " + height);
+                int ret = FishEyeProc.getOneFisheye360ParamRGB(previewPicRawData, width, height, outParam);
+                if (ret != 0) {
+                    return;
+                }
+
+                out = FishEyeProc.oneFisheye360Func(100, outParam);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            } finally {
+
+            }
+        }
+
+        verticesBuffer = new VertexBuffer(out.vertices);
+        texCoordsBuffer = new VertexBuffer(out.texCoords);
+
+        numElements = out.indices.length;
+        if (numElements < Short.MAX_VALUE) {
+            short[] element_index = new short[numElements];
+            for (int i = 0; i < out.indices.length; i++) {
+                element_index[i] = (short) out.indices[i];
+            }
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_SHORT;
+        } else {
+            int[] element_index = new int[numElements];
+            System.arraycopy(out.indices, 0, element_index, 0, out.indices.length);
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_INT;
+        }
     }
 
     private void createBufferData(int width, int height, YUVFrame frame) {
@@ -153,6 +210,22 @@ public class FishEye360 {
     private void buildProgram() {
         fishShader = new OneFishEye360ShaderProgram();
         //GLES20.glUseProgram(fishShader.getShaderProgramId());
+    }
+
+    private boolean initTexture(Bitmap bitmap) {
+        if(fishShader ==null) return false;
+        GLES20.glUseProgram(fishShader.getShaderProgramId());
+        int yuvTextureID = TextureHelper.loadTexture(bitmap);
+        if (yuvTextureID == 0) {
+            Log.w(TAG, "loadBitmapToTexture return TextureID=0 !");
+            return false;
+        }
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureID);
+        GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0); // => GLES20.GL_TEXTURE0
+
+        _yuvTextureIDs[0] = yuvTextureID;
+        return true;
     }
 
     private boolean initTexture(int width, int height, YUVFrame frame) {
@@ -204,7 +277,6 @@ public class FishEye360 {
     }
 
 
-
     public void onDrawFrame(YUVFrame frame) {
         if(!isInitialized) return;
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
@@ -214,7 +286,17 @@ public class FishEye360 {
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
 
-        updateTexture(frame);
+        GLES20.glUseProgram( fishShader.getShaderProgramId() );
+        if(frame!=null){
+            updateTexture(frame);
+            GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
+        }else{
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+            GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
+            GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
+        }
+
         updateBallMatrix();
         if (isNeedAutoScroll) {
             autoRotated();
@@ -609,4 +691,5 @@ public class FishEye360 {
     public void setCruiseDirection(int direction) {
         this.direction = direction;
     }
+
 }

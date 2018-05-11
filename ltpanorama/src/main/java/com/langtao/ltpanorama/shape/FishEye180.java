@@ -1,5 +1,7 @@
 package com.langtao.ltpanorama.shape;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
@@ -16,8 +18,9 @@ import com.langtao.ltpanorama.utils.CameraViewport;
 import com.langtao.ltpanorama.utils.MatrixHelper;
 import com.langtao.ltpanorama.utils.TextureHelper;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-
 
 
 public class FishEye180 {
@@ -75,6 +78,21 @@ public class FishEye180 {
         //timer.schedule(autoCruiseTimerTask, 5000, 10000);
     }
 
+    public void onSurfaceCreate(String previewPicPathName){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;   //指定需要的是原始数据，非压缩数据
+        final Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
+        if(bitmap == null){
+            throw new IllegalStateException("previewPicPathName not load in bitmap!");
+        }
+
+        createBufferData(bitmap);
+        buildProgram();
+        //initTexture(bitmap);
+        setAttributeStatus();
+        isInitialized = true;
+    }
+
     public void onSurfaceCreate(@NonNull YUVFrame frame){
         if(frame==null) return;
         createBufferData(frame.getWidth(),frame.getHeight(),frame);
@@ -96,6 +114,51 @@ public class FishEye180 {
                 0, 0, -2.6f,    //摄像机位置
                 0f, 0f, 0.0f,   //摄像机目标视点
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
+    }
+
+    private void createBufferData(Bitmap bitmap) {
+        if(out == null){
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try{
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                byte[] data = baos.toByteArray();
+                outParam = new OneFisheye180Param();
+                Log.w(TAG, "OneFisheye180ParamRGB  width&height : " +  bitmap.getWidth() + "  " + bitmap.getHeight());
+                int ret = FishEyeProc.getOneFisheye180ParamRGB(data, bitmap.getWidth(), bitmap.getHeight(), outParam);
+                if (ret != 0) {
+                    return;
+                }
+                out = FishEyeProc.oneFisheye180Func(100);
+
+            }catch ( Exception e){
+                e.printStackTrace();
+                return;
+            }finally {
+                try {
+                    baos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        verticesBuffer = new VertexBuffer(out.vertices);
+        texCoordsBuffer = new VertexBuffer(out.texCoords);
+
+        numElements = out.indices.length;
+        if(numElements < Short.MAX_VALUE){
+            short[] element_index = new short[numElements];
+            for (int i = 0; i < out.indices.length; i++) {
+                element_index[i] = (short) out.indices[i];
+            }
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_SHORT;
+        }else{
+            int[] element_index = new int[numElements];
+            System.arraycopy(out.indices, 0, element_index, 0, out.indices.length);
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_INT;
+        }
     }
 
     private void createBufferData(int width,int height,YUVFrame frame) {
@@ -142,6 +205,8 @@ public class FishEye180 {
         shader = new OneFishEye180ShaderProgram();
         //GLES20.glUseProgram( shader.getShaderProgramId() );
     }
+
+
 
     private boolean initTexture(int width,int height,YUVFrame frame) {
         if(shader == null) return false;

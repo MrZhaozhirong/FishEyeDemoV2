@@ -1,5 +1,7 @@
 package com.langtao.ltpanorama;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import com.langtao.ltpanorama.component.YUVFrame;
@@ -19,12 +21,53 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class LangTao360RenderMgr extends LTRenderManager   {
     private static final String TAG = LTRenderManager.TAG+"-360";
+    private static final String PIC = "PIC";
+    private static final String VIDEO = "VIDEO";
 
     public LangTao360RenderMgr() {
         super();
         RENDER_MODE = LTRenderMode.RENDER_MODE_360;
     }
 
+    private static volatile byte[] previewPicRawData;
+    private String previewPicPathName;
+    private volatile String PIC_OR_VIDEO = VIDEO; //default
+    public void setPreviewFishEyePicture(final String previewPicPathName) {
+        this.previewPicPathName = previewPicPathName;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    final BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inScaled = false;   //指定需要的是原始数据，非压缩数据
+                    Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
+                    if(bitmap == null){
+                        throw new IllegalStateException("previewPicPathName not load in bitmap!");
+                    }
+                    int width = bitmap.getWidth();
+                    int height = bitmap.getHeight();
+                    int[] pixels = new int[width * height];
+                    bitmap.getPixels(pixels,0,width, 0,0,width,height);
+                    previewPicRawData = IntsToBytes(pixels);
+                    PIC_OR_VIDEO = PIC;
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private byte[] IntsToBytes(int[] pixels) {
+        byte[] bytes = new byte[pixels.length * 4];
+        int offset = 0;
+        for (int pixel : pixels) {
+            bytes[offset++] = (byte) (pixel & 0xff);// 最低位
+            bytes[offset++] = (byte) ((pixel >> 8) & 0xff);// 次低位
+            bytes[offset++] = (byte) ((pixel >> 16) & 0xff);// 次高位
+            bytes[offset++] = (byte) (pixel >>> 24);// 最高位,无符号右移。
+        }
+        return bytes;
+    }
 
     private FishEye360 bowl;
     private FourEye360 fourEye;
@@ -60,43 +103,76 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     @Override
     public void onDrawFrame(GL10 gl) {
         try{
-            YUVFrame frame = mCircularBuffer.getFrame();
-            switch (RENDER_MODE){
-                case LTRenderMode.RENDER_MODE_180:{
-                    if( !curvedPlate.isInitialized ){
-                        curvedPlate.onSurfaceCreate(frame);
-                    }
-                    curvedPlate.onDrawFrame(frame);
-                }break;
-                case LTRenderMode.RENDER_MODE_360:{
-                    if( !bowl.isInitialized ){
-                        bowl.onSurfaceCreate(frame);
-                    }
-                    bowl.onDrawFrame(frame);
-                }break;
-                case LTRenderMode.RENDER_MODE_FOUR_EYE:{
-                    if( !fourEye.isInitialized ){
-                        fourEye.onSurfaceCreate(frame);
-                    }
-                    fourEye.onDrawFrame(frame);
-                }break;
-                case LTRenderMode.RENDER_MODE_TWO_RECTANGLE:{
-                    if( !rectangle.isInitialized ){
-                        rectangle.onSurfaceCreate(frame);
-                    }
-                    rectangle.onDrawFrame(frame);
-                }break;
-                case LTRenderMode.RENDER_MODE_CYLINDER:{
-                    if( !cylinder.isInitialized ){
-                        cylinder.onSurfaceCreate(frame);
-                    }
-                    cylinder.onDrawFrame(frame);
-                }break;
-                default:
-                    Log.w(TAG, "LangTao360RenderMgr RenderMode "+RENDER_MODE+" not recognized !!!");
-                    break;
+            if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
+                YUVFrame frame = mCircularBuffer.getFrame();
+                switch (RENDER_MODE){
+                    case LTRenderMode.RENDER_MODE_180:{
+                        if( !curvedPlate.isInitialized ){
+                            curvedPlate.onSurfaceCreate(frame);
+                        }
+                        curvedPlate.onDrawFrame(frame);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_360:{
+                        if( !bowl.isInitialized ){
+                            bowl.onSurfaceCreate(frame);
+                        }
+                        bowl.onDrawFrame(frame);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_FOUR_EYE:{
+                        if( !fourEye.isInitialized ){
+                            fourEye.onSurfaceCreate(frame);
+                        }
+                        fourEye.onDrawFrame(frame);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_TWO_RECTANGLE:{
+                        if( !rectangle.isInitialized ){
+                            rectangle.onSurfaceCreate(frame);
+                        }
+                        rectangle.onDrawFrame(frame);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_CYLINDER:{
+                        if( !cylinder.isInitialized ){
+                            cylinder.onSurfaceCreate(frame);
+                        }
+                        cylinder.onDrawFrame(frame);
+                    }break;
+                    default:
+                        Log.w(TAG, "LangTao360RenderMgr RenderMode "+RENDER_MODE+" not recognized !!!");
+                        break;
+                }
+                if(frame!=null) frame.release();
+            }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
+                switch (RENDER_MODE){
+                    case LTRenderMode.RENDER_MODE_360:{
+                        if( !bowl.isInitialized ){
+                            bowl.onSurfaceCreate(previewPicPathName, previewPicRawData);
+                        }
+                        bowl.onDrawFrame(null);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_FOUR_EYE:{
+                        if( !fourEye.isInitialized ){
+                            fourEye.onSurfaceCreate(previewPicPathName, previewPicRawData);
+                        }
+                        fourEye.onDrawFrame(null);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_TWO_RECTANGLE:{
+                        if( !rectangle.isInitialized ){
+                            rectangle.onSurfaceCreate(previewPicPathName, previewPicRawData);
+                        }
+                        rectangle.onDrawFrame(null);
+                    }break;
+                    case LTRenderMode.RENDER_MODE_CYLINDER:{
+                        if( !cylinder.isInitialized ){
+                            cylinder.onSurfaceCreate(previewPicPathName, previewPicRawData);
+                        }
+                        cylinder.onDrawFrame(null);
+                    }break;
+                    default:
+                        Log.w(TAG, "LangTao360RenderMgr RenderMode "+RENDER_MODE+" not recognized !!!");
+                        break;
+                }
             }
-            if(frame!=null) frame.release();
+            Log.w(TAG, "LangTao360RenderMgr onDrawFrame on RENDER_MODE:"+RENDER_MODE+" PIC_OR_VIDEO:"+PIC_OR_VIDEO);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -281,4 +357,5 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         if (rectangle != null)
             rectangle.setCruiseDirection(direction);
     }
+
 }

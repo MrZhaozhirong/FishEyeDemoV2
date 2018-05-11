@@ -1,5 +1,7 @@
 package com.langtao.ltpanorama.shape;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
@@ -28,7 +30,7 @@ public class Cylinder {
         System.loadLibrary("one_fisheye");
         System.loadLibrary("LTFishEyeProc");
     }
-    private static final String TAG = "FishEye360";
+    private static final String TAG = "Cylinder";
     private final static double overture = 50f;
     private float[] mProjectionMatrix = new float[16];// 4x4矩阵 存储投影矩阵
     private float[] mViewMatrix = new float[16]; // 摄像机位置朝向9参数矩阵
@@ -80,6 +82,43 @@ public class Cylinder {
     private int[] _yuvTextureIDs = new int[]{0};
 
 
+    private void createBufferData(int width, int height,byte[] previewPicRawData) {
+        if (out == null) {
+            try {
+                OneFisheye360Param outParam = new OneFisheye360Param();
+                Log.w(TAG, "OneFisheye360Param rgb width&height : " + width + "  " + height);
+                int ret = FishEyeProc.getOneFisheye360ParamRGB(previewPicRawData, width, height, outParam);
+                if (ret != 0) {
+                    return;
+                }
+
+                out = FishEyeProc.oneFisheye360CylinderFunc(100, outParam);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        verticesBuffer = new VertexBuffer(out.vertices);
+        texCoordsBuffer = new VertexBuffer(out.texCoords);
+
+        numElements = out.indices.length;
+        if (numElements < Short.MAX_VALUE) {
+            short[] element_index = new short[numElements];
+            for (int i = 0; i < out.indices.length; i++) {
+                element_index[i] = (short) out.indices[i];
+            }
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_SHORT;
+        } else {
+            int[] element_index = new int[numElements];
+            System.arraycopy(out.indices, 0, element_index, 0, out.indices.length);
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_INT;
+        }
+    }
+
+
     private void createBufferData(int width, int height, YUVFrame frame) {
         if (out == null) {
             try {
@@ -119,6 +158,21 @@ public class Cylinder {
     private void buildProgram() {
         shader = new OneFishEye360ShaderProgram();
         //GLES20.glUseProgram(shader.getShaderProgramId());
+    }
+
+    private boolean initTexture(Bitmap bitmap) {
+        if(shader ==null) return false;
+        GLES20.glUseProgram(shader.getShaderProgramId());
+        int yuvTextureID = TextureHelper.loadTexture(bitmap);
+        if (yuvTextureID == 0) {
+            Log.w(TAG, "loadBitmapToTexture return TextureID=0 !");
+            return false;
+        }
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureID);
+        GLES20.glUniform1i(shader.uLocationSamplerRGB, 0); // => GLES20.GL_TEXTURE0
+        _yuvTextureIDs[0] = yuvTextureID;
+        return true;
     }
 
     private boolean initTexture(int width, int height, YUVFrame frame) {
@@ -172,7 +226,22 @@ public class Cylinder {
 
 
 
+    public void onSurfaceCreate(String previewPicPathName, byte[] previewPicRawData) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;   //指定需要的是原始数据，非压缩数据
+        Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
+        if(bitmap == null){
+            throw new IllegalStateException("previewPicPathName not load in bitmap!");
+        }
 
+        createBufferData(bitmap.getWidth(), bitmap.getHeight(), previewPicRawData);
+        buildProgram();
+        initTexture(bitmap);
+        setAttributeStatus();
+        isInitialized = true;
+        bitmap.recycle();
+        bitmap = null;
+    }
 
     public void onSurfaceCreate(@NonNull YUVFrame frame) {
         if(frame == null) return;
@@ -182,6 +251,7 @@ public class Cylinder {
         setAttributeStatus();
         isInitialized = true;
     }
+
     public void onSurfaceChange(int width, int height) {
         float ratio = (float) width / (float) height;
         resetMatrixStatus();
@@ -205,19 +275,28 @@ public class Cylinder {
         GLES20.glEnable(GLES20.GL_CULL_FACE);
     }
 
-    public void onDrawFrame(@NonNull YUVFrame frame) {
+    public void onDrawFrame(YUVFrame frame) {
+        if (!this.isInitialized) return;
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
-        if (this.isInitialized) {
+
+        GLES20.glUseProgram( shader.getShaderProgramId() );
+        if(frame!=null){
             updateTexture(frame);
-            updateCylinderMatrix();
-            setAttributeStatus();
-            if (isNeedAutoScroll) {
-                autoRotated();
-            }
-            this.draw();
+            GLES20.glUniform1i(shader.uLocationImageMode, 0);
+        }else{
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+            GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
+            GLES20.glUniform1i(shader.uLocationImageMode, 1);
         }
+        updateCylinderMatrix();
+        setAttributeStatus();
+        if (isNeedAutoScroll) {
+            autoRotated();
+        }
+        this.draw();
     }
 
 

@@ -1,5 +1,7 @@
 package com.langtao.ltpanorama.shape;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.support.annotation.NonNull;
@@ -79,6 +81,44 @@ public class FourEye360 {
 
     //================================建模视频帧相关==============================================================
     //================================建模视频帧相关==============================================================
+    private void createBufferData(int width, int height, byte[] previewPicRawData) {
+        if(out == null){
+            try{
+                OneFisheye360Param outParam = new OneFisheye360Param();
+                Log.w(TAG, "OneFisheye360Param rgb width&height : " + width+ "  " + height);
+                int ret = FishEyeProc.getOneFisheye360ParamRGB(previewPicRawData, width, height, outParam);
+                Log.w(TAG, "getOneFisheye360ParamRGB ret : " + ret);
+                if (ret != 0) {
+                    return;
+                }
+
+                out = FishEyeProc.oneFisheye360Func(100, outParam);
+            }catch ( Exception e){
+                e.printStackTrace();
+                return;
+            }finally {
+            }
+        }
+
+        verticesBuffer = new VertexBuffer(out.vertices);
+        texCoordsBuffer = new VertexBuffer(out.texCoords);
+
+        numElements = out.indices.length;
+        if(numElements < Short.MAX_VALUE){
+            short[] element_index = new short[numElements];
+            for (int i = 0; i < out.indices.length; i++) {
+                element_index[i] = (short) out.indices[i];
+            }
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_SHORT;
+        }else{
+            int[] element_index = new int[numElements];
+            System.arraycopy(out.indices, 0, element_index, 0, out.indices.length);
+            indicesBuffer = new IndexBuffer(element_index);
+            drawElementType = GLES20.GL_UNSIGNED_INT;
+        }
+    }
+
 
     private void createBufferData(int width,int height,YUVFrame frame) {
         if(out == null){
@@ -122,6 +162,24 @@ public class FourEye360 {
     private void buildProgram() {
         fishShader = new OneFishEye360ShaderProgram();
         //GLES20.glUseProgram( fishShader.getShaderProgramId() );
+    }
+
+    private boolean initTexture(Bitmap bitmap) {
+        if(fishShader ==null) return false;
+        GLES20.glUseProgram( fishShader.getShaderProgramId() );
+        int yuvTextureID = TextureHelper.loadTexture(bitmap);
+        if (yuvTextureID == 0) {
+            Log.w(TAG, "loadBitmapToTexture return TextureID=0 !");
+            return false;
+        }
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureID);
+        GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0); // => GLES20.GL_TEXTURE0
+
+        _yuvTextureIDs[0] = yuvTextureID;
+        mFrameWidth = bitmap.getWidth();
+        mFrameHeight= bitmap.getHeight();
+        return true;
     }
 
     private boolean initTexture(int width,int height,YUVFrame frame) {
@@ -246,7 +304,23 @@ public class FourEye360 {
     }
 
 
+    public void onSurfaceCreate(String previewPicPathName, byte[] previewPicRawData){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;   //指定需要的是原始数据，非压缩数据
+        Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
+        if(bitmap == null){
+            throw new IllegalStateException("previewPicPathName not load in bitmap!");
+        }
 
+        createBufferData(bitmap.getWidth(),bitmap.getHeight(),previewPicRawData);
+        buildProgram();
+        initTexture(bitmap);
+        setAttributeStatus();
+        isInitialized = true;
+        bitmap.recycle();
+        bitmap = null;
+        splitScreenCanvas.onSurfaceCreate();
+    }
 
     public void onSurfaceCreate(@NonNull YUVFrame frame) {
         if(frame == null) return;
@@ -291,15 +365,19 @@ public class FourEye360 {
 
 
     public void onDrawFrame(YUVFrame frame) {
+        if(!isInitialized) return;
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
-        //if(actionSwap)
+        if(frame!=null)
         {
+
             fbo1.begin();
-            GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-            GLES20.glCullFace(GLES20.GL_BACK);
-            GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
                 updateTexture(frame);
                 updateBowlMatrix(0,0,0);
                 if(isNeedAutoScroll){
@@ -315,10 +393,12 @@ public class FourEye360 {
             splitScreenCanvas.draw();
 
             fbo1.begin();
-            GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-            GLES20.glCullFace(GLES20.GL_BACK);
-            GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
                 updateTexture(frame);
                 updateBowlMatrix(90f,0,0);
                 if(isNeedAutoScroll){
@@ -334,10 +414,12 @@ public class FourEye360 {
             splitScreenCanvas.draw();
 
             fbo1.begin();
-            GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-            GLES20.glCullFace(GLES20.GL_BACK);
-            GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
                 updateTexture(frame);
                 updateBowlMatrix(180f,0,0);
                 if(isNeedAutoScroll){
@@ -353,11 +435,112 @@ public class FourEye360 {
             splitScreenCanvas.draw();
 
             fbo1.begin();
-            GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-            GLES20.glCullFace(GLES20.GL_BACK);
-            GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
                 updateTexture(frame);
+                updateBowlMatrix(270f,0,0);
+                if(isNeedAutoScroll){
+                    autoRotated();
+                }
+                this.setAttributeStatus();
+                this.draw();
+            fbo1.end();
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+            GLES20.glDisable(GLES20.GL_CULL_FACE);
+            splitScreenCanvas.setShaderAttribute(4);
+            splitScreenCanvas.setDrawTexture(fbo1.getTextureId());
+            splitScreenCanvas.draw();
+        }
+        else // 静态预览图片
+        {
+
+            fbo1.begin();
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
+                //对应视频的updateTexture操作
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+                GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
+                updateBowlMatrix(0,0,0);
+                if(isNeedAutoScroll){
+                    autoRotated();
+                }
+                this.setAttributeStatus();
+                this.draw();
+            fbo1.end();
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+            GLES20.glDisable(GLES20.GL_CULL_FACE);
+            splitScreenCanvas.setShaderAttribute(1);
+            splitScreenCanvas.setDrawTexture(fbo1.getTextureId());
+            splitScreenCanvas.draw();
+
+            fbo1.begin();
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
+                //对应视频的updateTexture操作
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+                GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
+                updateBowlMatrix(90f,0,0);
+                if(isNeedAutoScroll){
+                    autoRotated();
+                }
+                this.setAttributeStatus();
+                this.draw();
+            fbo1.end();
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+            GLES20.glDisable(GLES20.GL_CULL_FACE);
+            splitScreenCanvas.setShaderAttribute(2);
+            splitScreenCanvas.setDrawTexture(fbo1.getTextureId());
+            splitScreenCanvas.draw();
+
+            fbo1.begin();
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
+                //对应视频的updateTexture操作
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+                GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
+                updateBowlMatrix(180f,0,0);
+                if(isNeedAutoScroll){
+                    autoRotated();
+                }
+                this.setAttributeStatus();
+                this.draw();
+            fbo1.end();
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+            GLES20.glDisable(GLES20.GL_CULL_FACE);
+            splitScreenCanvas.setShaderAttribute(3);
+            splitScreenCanvas.setDrawTexture(fbo1.getTextureId());
+            splitScreenCanvas.draw();
+
+            fbo1.begin();
+                GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+                GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+                GLES20.glCullFace(GLES20.GL_BACK);
+                GLES20.glEnable(GLES20.GL_CULL_FACE);
+                GLES20.glUseProgram( fishShader.getShaderProgramId() );
+                GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
+                //对应视频的updateTexture操作
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+                GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
                 updateBowlMatrix(270f,0,0);
                 if(isNeedAutoScroll){
                     autoRotated();
