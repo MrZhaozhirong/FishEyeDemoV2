@@ -139,7 +139,7 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 if(!picBall.isInitialized) {
                     picBall.onSurfaceCreated(bitmap_path);
                 }
-                if(picBall.isInitialized && templateBall.isBootAnimation) {
+                if(picBall.isInitialized && picBall.isBootAnimation) {
                     picBall.updateBallControlMode();
                 }
                 picBall.updateBallMatrix();
