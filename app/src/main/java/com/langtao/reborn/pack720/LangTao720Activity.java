@@ -316,7 +316,8 @@ public class LangTao720Activity extends Activity {
         disconnectDevice();
         if(mLT720RenderMgr!=null) {
             if(mLT720RenderMgr instanceof LangTao720RenderMgr){
-                ((LangTao720RenderMgr)mLT720RenderMgr).setPreviewPanoramaPicture(PanoramaScreenshot_path);
+                ((LangTao720RenderMgr)mLT720RenderMgr).setPreviewPanoramaPicture(
+                        PanoramaScreenshot_path+File.separator+"_LTPanorama.JPG");
                 ((LangTao720RenderMgr)mLT720RenderMgr).setPreviewPic();
             }
         }
@@ -368,13 +369,13 @@ public class LangTao720Activity extends Activity {
             Log.w(TAG, "currentTime : mirror-reversed data "+ estimatedTime);
 
             startTime = System.nanoTime();
-            Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
+            Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             bitmap.copyPixelsFromBuffer(IntBuffer.wrap(iat));
             estimatedTime = System.nanoTime() - startTime;
             Log.w(TAG, "currentTime : copyPixelsFromBuffer "+estimatedTime);
 
             startTime = System.nanoTime();
-            File f = new File(PanoramaScreenshot_path, w+"x"+h+"_LTPanorama.JPG");
+            File f = new File(PanoramaScreenshot_path, "_LTPanorama.JPG");
             if (f.exists()) {
                 f.delete();
             }
