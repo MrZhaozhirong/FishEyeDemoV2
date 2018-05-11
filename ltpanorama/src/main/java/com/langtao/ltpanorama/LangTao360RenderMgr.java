@@ -34,6 +34,7 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     private volatile String PIC_OR_VIDEO = VIDEO; //default
     public void setPreviewFishEyePicture(final String previewPicPathName) {
         this.previewPicPathName = previewPicPathName;
+        //注意bitmap位图读取byte[]的方式，1个int转4个byte，还有java基础变量都是有符号数
         new Thread(new Runnable() {
             @Override
             public void run() {
