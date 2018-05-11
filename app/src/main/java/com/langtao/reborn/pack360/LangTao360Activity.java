@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import glnk.client.GlnkClient;
 import glnk.media.AViewRenderer;
@@ -164,11 +165,23 @@ public class LangTao360Activity extends Activity {
         }
     }
     public void clickCaptureFrame(@SuppressLint("USELESS") View view){
-        if(renderer!=null){
-            new CaptureFrameFile("frame.jpg").start();
+        if(renderer!=null && renderer instanceof AViewRenderer){
+            ((AViewRenderer) renderer).setYuvRequestRGBFrame(
+                    new AViewRenderer.ValidateRGBCallback() {
+                        @Override
+                        public void rgb_Callback(byte[] bytes, int length,int width,int height) {
+                            new CaptureFrameFile("frame.jpg",bytes,length,width,height).start();
+                        }
+                    });
         }
     }
 
+    public void clickPreviewPicFishEye(@SuppressLint("USELESS") View view) {
+        close_connect();
+        if(mLT360RenderMgr!=null) {
+            mLT360RenderMgr.setPreviewFishEyePicture(PanoramaScreenshot_path+File.separator+"frame.jpg");
+        }
+    }
 
 
     private class GLViewTouchListener implements View.OnTouchListener {
@@ -398,8 +411,16 @@ public class LangTao360Activity extends Activity {
 
     private class CaptureFrameFile extends Thread {
         private final String fileName;
-        CaptureFrameFile(String fileName){
+        private final byte[] bytes;
+        private final int mRgbLen;
+        private final int mWidth;
+        private final int mHeight;
+        CaptureFrameFile(String fileName,byte[] bytes, int len, int width,int height){
             this.fileName = fileName;
+            this.mRgbLen = len;
+            this.bytes = bytes;
+            this.mWidth = width;
+            this.mHeight = height;
         }
 
         @Override
@@ -408,15 +429,16 @@ public class LangTao360Activity extends Activity {
             String filename = PanoramaScreenshot_path+"/"+fileName;
             Log.d(TAG, "capture frame file : "+filename);
             try {
+                Bitmap bitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.RGB_565);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                bitmap.copyPixelsFromBuffer(buffer);
                 File file = new File(filename);
-                Bitmap frame = ((AViewRenderer) renderer).getFrame();
                 if(file.exists()) {
-                    boolean delete = file.delete();
-                    if(delete) {
-                        saveBitmapToPath(frame, filename);
+                    if(file.delete()) {
+                        saveBitmapToPath(bitmap, filename);
                     }
-                } else {
-                    saveBitmapToPath(frame, filename);
+                }else{
+                    saveBitmapToPath(bitmap, filename);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

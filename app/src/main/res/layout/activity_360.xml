@@ -15,7 +15,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="v3027ee621"
+            android:text="80416597"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -35,7 +35,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="admin"
+            android:text="123456"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -107,8 +107,23 @@
             android:text="180"
             android:onClick="clickMode180"/>
         <Space
-            android:layout_width="2dp"
+            android:layout_width="1dp"
             android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/left_cruise"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="左转"
+            android:onClick="clickLeftCruise" />
+        <Space
+            android:layout_width="1dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/right_cruise"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="右转"
+            android:onClick="clickRightCruise"/>
     </LinearLayout>
 
     <LinearLayout
@@ -117,24 +132,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-        <Button
-            android:id="@+id/left_cruise"
-            android:layout_width="55dp"
-            android:layout_height="wrap_content"
-            android:text="左转"
-            android:onClick="clickLeftCruise" />
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
-        <Button
-            android:id="@+id/right_cruise"
-            android:layout_width="55dp"
-            android:layout_height="wrap_content"
-            android:text="右转"
-            android:onClick="clickRightCruise"/>
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/dump_yuv"
             android:layout_width="112dp"
@@ -150,6 +147,15 @@
             android:layout_height="wrap_content"
             android:text="get frame"
             android:onClick="clickCaptureFrame" />
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/preview_pic_fishEye"
+            android:layout_width="112dp"
+            android:layout_height="wrap_content"
+            android:text="preview pic"
+            android:onClick="clickPreviewPicFishEye" />
     </LinearLayout>
 
     <RelativeLayout

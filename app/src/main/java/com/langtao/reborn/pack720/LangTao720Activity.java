@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +40,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.microedition.khronos.opengles.GL10;
 
 import glnk.client.GlnkChannel;
 import glnk.client.GlnkClient;
@@ -106,6 +111,19 @@ public class LangTao720Activity extends Activity {
         LocalBroadcastManager.getInstance(this).registerReceiver(deviceStatusReceiver,filter);
 
         gl_view_container = (RelativeLayout) findViewById(R.id.gl_view_container);
+
+        final ImageView someImageView = (ImageView) this.findViewById(R.id.someImageView);
+        this.findViewById(R.id.capture_screen).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                captureBitmap(new BitmapReadyCallbacks() {
+                    @Override
+                    public void onBitmapReady(Bitmap bitmap) {
+                        someImageView.setImageBitmap(bitmap);
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -306,6 +324,118 @@ public class LangTao720Activity extends Activity {
             return true;
         }
     }
+
+
+    ///////////////////glSurfaceView截图 start//////////////////////////////
+    private void captureBitmap(final BitmapReadyCallbacks bitmapReadyCallbacks){
+        if(gl_view==null)return;
+        gl_view.queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                //EGL10 egl = (EGL10) EGLContext.getEGL();
+                //GL10 gl = (GL10)egl.eglGetCurrentContext().getGL();
+                //final Bitmap snapshotBitmap = createBitmapFromGLSurface(0, 0,
+                //        glSurfaceView.getWidth(), glSurfaceView.getHeight(), gl);
+                final Bitmap snapshotBitmap = createBitmapFromGLSurface2(0, 0,
+                        gl_view.getWidth(), gl_view.getHeight(), null);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bitmapReadyCallbacks.onBitmapReady(snapshotBitmap);
+                    }
+                });
+            }
+        });
+    }
+
+    private Bitmap createBitmapFromGLSurface2(int x, int y, int w, int h, GL10 gl){
+        int bitmapBuffer[] = new int[w * h];
+        int bitmapSource[] = new int[w * h];
+        IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+        intBuffer.position(0);
+        try {
+            GLES20.glReadPixels(x, y, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, intBuffer);
+            boolean blackScreen = isBlackScreen(w, h, bitmapBuffer);
+            if(blackScreen) {
+                Log.w(TAG, "createBitmapFromGLSurface2 is Black !!!");
+                return null;
+            }
+            int offset1, offset2;
+            for (int i = 0; i < h; i++) {
+                offset1 = i * w;
+                offset2 = (h - i - 1) * w;
+                for (int j = 0; j < w; j++) {
+                    int texturePixel = bitmapBuffer[offset1 + j];
+                    int blue = (texturePixel >> 16) & 0xff;
+                    int red = (texturePixel << 16) & 0x00ff0000;
+                    int pixel = (texturePixel & 0xff00ff00) | red | blue;
+                    bitmapSource[offset2 + j] = pixel;
+                }
+            }
+        } catch (GLException e) {
+            Log.e(TAG, "createBitmapFromGLSurface2 : " + e.getMessage(), e);
+            return null;
+        }
+        return Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
+    }
+
+    private boolean isBlackScreen(int w, int h, int[] bitmapBuffer) {
+        //int i1 = bitmapBuffer[0]; 有符号数 -16777216
+        //byte byte1 = (byte) (i1 & 0xff);// 最低位 0
+        //byte byte2 = (byte) ((i1 >> 8) & 0xff);// 次低位 0
+        //byte byte3 = (byte) ((i1 >> 16) & 0xff);// 次高位 0
+        //byte byte4 = (byte) (i1 >>> 24);// 最高位 -1
+        int w_middle = w/2;
+        int h_middle = h/2;
+        boolean verticalIsBlack = true;
+        for(int i=0; i<h; i++) {
+            if(bitmapBuffer[w_middle+i*w] != -16777216){
+                verticalIsBlack = false;
+            }
+        }
+        boolean horizontalIsBlack = true;
+        for(int i=0; i<w; i++) {
+            if(bitmapBuffer[w*h_middle+i] != -16777216){
+                horizontalIsBlack = false;
+            }
+        }
+        return (verticalIsBlack && horizontalIsBlack);
+        //return verticalIsBlack;
+    }
+
+    private Bitmap createBitmapFromGLSurface(int x, int y, int w, int h, GL10 gl) {
+
+        int bitmapBuffer[] = new int[w * h];
+        int bitmapSource[] = new int[w * h];
+        IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+        intBuffer.position(0);
+        try {
+            gl.glReadPixels(x, y, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
+            //bitmapSource = intBuffer.array();
+            int offset1, offset2;
+            for (int i = 0; i < h; i++) {
+                offset1 = i * w;
+                offset2 = (h - i - 1) * w;
+                for (int j = 0; j < w; j++) {
+                    int texturePixel = bitmapBuffer[offset1 + j];
+                    int blue = (texturePixel >> 16) & 0xff;
+                    int red = (texturePixel << 16) & 0x00ff0000;
+                    int pixel = (texturePixel & 0xff00ff00) | red | blue;
+                    bitmapSource[offset2 + j] = pixel;
+                }
+            }
+        } catch (GLException e) {
+            Log.e(TAG, "createBitmapFromGLSurface: " + e.getMessage(), e);
+            return null;
+        }
+        return Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
+    }
+
+    public interface BitmapReadyCallbacks {
+        void onBitmapReady(Bitmap bitmap);
+    }
+
 
 
     /////////////////// 2:1全景图 start//////////////////////////////////////////////////////////////////////////////////
