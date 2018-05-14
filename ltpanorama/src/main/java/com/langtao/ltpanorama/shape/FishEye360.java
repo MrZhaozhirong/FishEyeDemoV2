@@ -93,7 +93,7 @@ public class FishEye360 {
     private OneFishEye360ShaderProgram fishShader;
     private int[] _yuvTextureIDs = new int[]{0};
 
-    public void onSurfaceCreate(String previewPicPathName,byte[] previewPicRawData){
+    public void onSurfaceCreate(String previewPicPathName,int[] previewPicData){
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;   //指定需要的是原始数据，非压缩数据
         Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
@@ -101,7 +101,7 @@ public class FishEye360 {
             throw new IllegalStateException("previewPicPathName not load in bitmap!");
         }
 
-        createBufferData(bitmap.getWidth(),bitmap.getHeight(),previewPicRawData);
+        createBufferData(bitmap.getWidth(),bitmap.getHeight(), previewPicData);
         buildProgram();
         initTexture(bitmap);
         setAttributeStatus();
@@ -133,12 +133,12 @@ public class FishEye360 {
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
     }
 
-    private void createBufferData(int width, int height, byte[] previewPicRawData) {
+    private void createBufferData(int width, int height, int[] previewPicRawData) {
         if (out == null) {
             try {
                 OneFisheye360Param outParam = new OneFisheye360Param();
                 Log.w(TAG, "OneFisheye360Param rgb width&height : " + width+ "  " + height);
-                int ret = FishEyeProc.getOneFisheye360ParamRGB(previewPicRawData, width, height, outParam);
+                int ret = FishEyeProc.getOneFisheye360ParamIntRGBA(previewPicRawData, width, height, outParam);
                 if (ret != 0) {
                     return;
                 }

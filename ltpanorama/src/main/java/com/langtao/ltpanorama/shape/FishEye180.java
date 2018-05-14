@@ -18,8 +18,6 @@ import com.langtao.ltpanorama.utils.CameraViewport;
 import com.langtao.ltpanorama.utils.MatrixHelper;
 import com.langtao.ltpanorama.utils.TextureHelper;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 
@@ -78,19 +76,21 @@ public class FishEye180 {
         //timer.schedule(autoCruiseTimerTask, 5000, 10000);
     }
 
-    public void onSurfaceCreate(String previewPicPathName){
+    public void onSurfaceCreate(String previewPicPathName, int[] previewPicRawData){
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;   //指定需要的是原始数据，非压缩数据
-        final Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
+        Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);
         if(bitmap == null){
             throw new IllegalStateException("previewPicPathName not load in bitmap!");
         }
 
-        createBufferData(bitmap);
+        createBufferData(bitmap.getWidth(), bitmap.getHeight(), previewPicRawData);
         buildProgram();
-        //initTexture(bitmap);
+        initTexture(bitmap);
         setAttributeStatus();
         isInitialized = true;
+        bitmap.recycle();
+        bitmap = null;
     }
 
     public void onSurfaceCreate(@NonNull YUVFrame frame){
@@ -116,15 +116,12 @@ public class FishEye180 {
                 0f, 1.0f, 0.0f);//摄像机头顶方向向量
     }
 
-    private void createBufferData(Bitmap bitmap) {
+    private void createBufferData(int width, int height, int[] previewPicRawData) {
         if(out == null){
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try{
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                byte[] data = baos.toByteArray();
                 outParam = new OneFisheye180Param();
-                Log.w(TAG, "OneFisheye180ParamRGB  width&height : " +  bitmap.getWidth() + "  " + bitmap.getHeight());
-                int ret = FishEyeProc.getOneFisheye180ParamRGB(data, bitmap.getWidth(), bitmap.getHeight(), outParam);
+                Log.w(TAG, "OneFisheye180Param rgb width&height : " + width+ "  " + height);
+                int ret = FishEyeProc.getOneFisheye180ParamIntRGBA(previewPicRawData, width, height, outParam);
                 if (ret != 0) {
                     return;
                 }
@@ -134,11 +131,6 @@ public class FishEye180 {
                 e.printStackTrace();
                 return;
             }finally {
-                try {
-                    baos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         }
 
@@ -206,7 +198,21 @@ public class FishEye180 {
         //GLES20.glUseProgram( shader.getShaderProgramId() );
     }
 
+    private boolean initTexture(Bitmap bitmap) {
+        if(shader ==null) return false;
+        GLES20.glUseProgram(shader.getShaderProgramId());
+        int yuvTextureID = TextureHelper.loadTexture(bitmap);
+        if (yuvTextureID == 0) {
+            Log.w(TAG, "loadBitmapToTexture return TextureID=0 !");
+            return false;
+        }
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureID);
+        GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
 
+        _yuvTextureIDs[0] = yuvTextureID;
+        return true;
+    }
 
     private boolean initTexture(int width,int height,YUVFrame frame) {
         if(shader == null) return false;
@@ -286,7 +292,16 @@ public class FishEye180 {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
-        updateTexture(frame);
+        if(frame!=null) {
+            updateTexture(frame);
+            GLES20.glUniform1i(shader.uLocationImageMode, 0);
+        }else{
+            GLES20.glUniform1i(shader.uLocationImageMode, 1);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+            GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
+        }
+
         setAttributeStatus();
         this.updateCruise();
         this.updateMatrix();

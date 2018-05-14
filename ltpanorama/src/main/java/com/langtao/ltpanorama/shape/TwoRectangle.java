@@ -90,12 +90,12 @@ public class TwoRectangle  {
     private int[] _yuvTextureIDs = new int[]{0};
 
 
-    private void createBufferData(int width, int height, byte[] previewPicRawData) {
+    private void createBufferData(int width, int height, int[] previewPicRawData) {
         if (out == null) {
             try {
 
                 OneFisheye360Param outParam = new OneFisheye360Param();
-                int ret = FishEyeProc.getOneFisheye360ParamRGB(previewPicRawData, width, height, outParam);
+                int ret = FishEyeProc.getOneFisheye360ParamIntRGBA(previewPicRawData, width, height, outParam);
                 if (ret != 0) {
                     return;
                 }
@@ -179,7 +179,6 @@ public class TwoRectangle  {
     private boolean initTexture(Bitmap bitmap) {
         if(shader ==null) return false;
         GLES20.glUseProgram(shader.getShaderProgramId());
-        //int[] yuvTextureIDs = TextureHelper.loadYUVTexture(context, R.raw.down, 1280, 1024);
         int yuvTextureID = TextureHelper.loadTexture(bitmap);
         if (yuvTextureID == 0) {
             Log.w(TAG, "loadBitmapToTexture return TextureID=0 !");
@@ -187,7 +186,7 @@ public class TwoRectangle  {
         }
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextureID);
-        GLES20.glUniform1i(shader.uLocationSamplerY, 0); // => GLES20.GL_TEXTURE0
+        GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
 
         _yuvTextureIDs[0] = yuvTextureID;
         return true;
@@ -241,7 +240,6 @@ public class TwoRectangle  {
                 TEXTURE_COORDINATE_COMPONENT_COUNT,
                 TEXTURE_COORDINATE_COMPONENT_COUNT * BYTES_PER_FLOAT, 0);
 
-        GLES20.glUniform1i(shader.uLocationImageMode, 0);
         GLES20.glUniform1i(shader.isTwoRectangle, 1);
         GLES20.glUniform1f(shader.cala, twoRectangleOut.cala);
         GLES20.glUniform1f(shader.factorA, twoRectangleOut.factorA);
@@ -262,7 +260,7 @@ public class TwoRectangle  {
 
 
 
-    public void onSurfaceCreate(String previewPicPathName, byte[] previewPicRawData) {
+    public void onSurfaceCreate(String previewPicPathName, int[] previewPicRawData) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;   //指定需要的是原始数据，非压缩数据
         Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);

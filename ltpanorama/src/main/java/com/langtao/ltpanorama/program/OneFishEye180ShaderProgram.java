@@ -24,6 +24,10 @@ public class OneFishEye180ShaderProgram extends ShaderProgram{
     public int uLocationSamplerU;
     public int uLocationSamplerV;
     public int uLocationCCM;
+    private static final String SAMPLER_RGB = "SamplerRGB";
+    private static final String IMAGE_MODE = "imageMode";
+    public int uLocationSamplerRGB;
+    public int uLocationImageMode;
     private static final String WIDTH = "width";
     private static final String HEIGHT = "height";
     private static final String RECT_X = "rectX";
@@ -49,6 +53,9 @@ public class OneFishEye180ShaderProgram extends ShaderProgram{
         uLocationSamplerU = GLES20.glGetUniformLocation(programId, SAMPLER_U);
         uLocationSamplerV = GLES20.glGetUniformLocation(programId, SAMPLER_V);
         uLocationCCM = GLES20.glGetUniformLocation(programId, COLOR_CONVERSION_MATRIX);
+
+        uLocationSamplerRGB = GLES20.glGetUniformLocation(programId, SAMPLER_RGB);
+        uLocationImageMode = GLES20.glGetUniformLocation(programId, IMAGE_MODE);
 
         uLocationWidth = GLES20.glGetUniformLocation(programId, WIDTH);
         uLocationHeight = GLES20.glGetUniformLocation(programId, HEIGHT);
@@ -78,10 +85,12 @@ public class OneFishEye180ShaderProgram extends ShaderProgram{
             "uniform sampler2D SamplerU;\n" +
             "uniform sampler2D SamplerV;\n" +
             "\n" +
-            "varying highp vec2 v_textureCoordinate;\n" +
+            "uniform sampler2D SamplerRGB;\n" +
+            "uniform int imageMode;\n" +
             "\n" +
             "uniform mat3 colorConversionMatrix;\n" +
             "\n" +
+            "varying highp vec2 v_textureCoordinate;\n" +
             "\n" +
             "uniform float width;\n" +
             "uniform float height;\n" +
@@ -114,11 +123,14 @@ public class OneFishEye180ShaderProgram extends ShaderProgram{
             "        }\n" +
             "        else\n" +
             "        {\n" +
-            "            float dHeight = rectHeight * (v_textureCoordinate.y - heightBegin) / (heightEnd - " +
-            "heightBegin);\n" +
+            "            float dHeight = rectHeight * (v_textureCoordinate.y - heightBegin) / (heightEnd - heightBegin);\n" +
             "            float u = (rectX + rectWidth * v_textureCoordinate.x) / width;\n" +
             "            float v = (rectY + dHeight) / height;\n" +
-            "            rgb = yuv2rgb(vec2(u, v));\n" +
+            "            if (imageMode == 0) {\n"+
+            "               rgb = yuv2rgb(vec2(u, v));\n"+
+            "            } else if (imageMode == 1){\n"+
+            "               rgb = texture2D(SamplerRGB, vec2(u, v)).rgb;\n"+
+            "            }\n"+
             "        }\n" +
             "    }\n" +
             "    else if (rectWidth < rectHeight) {\n" +
@@ -133,13 +145,21 @@ public class OneFishEye180ShaderProgram extends ShaderProgram{
             "            float dWidth = rectWidth * (v_textureCoordinate.x - widthBegin) / (widthEnd - widthBegin);\n" +
             "            float u = (rectX + dWidth) / width;\n" +
             "            float v = (rectY + rectHeight * v_textureCoordinate.y) / height;\n" +
-            "            rgb = yuv2rgb(vec2(u, v));\n" +
+            "            if (imageMode == 0) {\n"+
+            "               rgb = yuv2rgb(vec2(u, v));\n"+
+            "            } else if (imageMode == 1){\n"+
+            "               rgb = texture2D(SamplerRGB, vec2(u, v)).rgb;\n"+
+            "            }\n"+
             "        }\n" +
             "    }\n" +
             "    else {\n" +
             "        float u = (rectX + rectWidth * v_textureCoordinate.x) / width;\n" +
             "        float v = (rectY + rectHeight * v_textureCoordinate.y) / height;\n" +
-            "        rgb = yuv2rgb(vec2(u, v));\n" +
+            "        if (imageMode == 0) {\n"+
+            "           rgb = yuv2rgb(vec2(u, v));\n"+
+            "        } else if (imageMode == 1){\n"+
+            "           rgb = texture2D(SamplerRGB, vec2(u, v)).rgb;\n"+
+            "        }\n"+
             "    }\n" +
             "\n" +
             "    gl_FragColor = vec4(rgb, 1.0);\n" +

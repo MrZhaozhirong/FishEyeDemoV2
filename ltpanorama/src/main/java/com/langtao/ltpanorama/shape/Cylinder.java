@@ -82,12 +82,12 @@ public class Cylinder {
     private int[] _yuvTextureIDs = new int[]{0};
 
 
-    private void createBufferData(int width, int height,byte[] previewPicRawData) {
+    private void createBufferData(int width, int height,int[] previewPicRawData) {
         if (out == null) {
             try {
                 OneFisheye360Param outParam = new OneFisheye360Param();
                 Log.w(TAG, "OneFisheye360Param rgb width&height : " + width + "  " + height);
-                int ret = FishEyeProc.getOneFisheye360ParamRGB(previewPicRawData, width, height, outParam);
+                int ret = FishEyeProc.getOneFisheye360ParamIntRGBA(previewPicRawData, width, height, outParam);
                 if (ret != 0) {
                     return;
                 }
@@ -226,7 +226,7 @@ public class Cylinder {
 
 
 
-    public void onSurfaceCreate(String previewPicPathName, byte[] previewPicRawData) {
+    public void onSurfaceCreate(String previewPicPathName, int[] previewPicRawData) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;   //指定需要的是原始数据，非压缩数据
         Bitmap bitmap = BitmapFactory.decodeFile(previewPicPathName, options);

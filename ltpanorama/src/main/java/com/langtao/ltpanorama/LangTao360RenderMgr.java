@@ -29,7 +29,8 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         RENDER_MODE = LTRenderMode.RENDER_MODE_360;
     }
 
-    private static volatile byte[] previewPicRawData;
+    //private static volatile byte[] previewPicRawData;
+    private static volatile int[] previewPicRawData;
     private String previewPicPathName;
     private volatile String PIC_OR_VIDEO = VIDEO; //default
     public void setPreviewFishEyePicture(final String previewPicPathName) {
@@ -49,7 +50,7 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                     int height = bitmap.getHeight();
                     int[] pixels = new int[width * height];
                     bitmap.getPixels(pixels,0,width, 0,0,width,height);
-                    previewPicRawData = IntsToBytes(pixels);
+                    previewPicRawData = pixels;
                     PIC_OR_VIDEO = PIC;
                 }catch (Exception e){
                     e.printStackTrace();
@@ -144,6 +145,12 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                 if(frame!=null) frame.release();
             }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
                 switch (RENDER_MODE){
+                    case LTRenderMode.RENDER_MODE_180:{
+                        if( !curvedPlate.isInitialized ){
+                            curvedPlate.onSurfaceCreate(previewPicPathName, previewPicRawData);
+                        }
+                        curvedPlate.onDrawFrame(null);
+                    }break;
                     case LTRenderMode.RENDER_MODE_360:{
                         if( !bowl.isInitialized ){
                             bowl.onSurfaceCreate(previewPicPathName, previewPicRawData);
