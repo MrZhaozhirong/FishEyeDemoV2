@@ -149,38 +149,37 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                         if( !curvedPlate.isInitialized ){
                             curvedPlate.onSurfaceCreate(previewPicPathName, previewPicRawData);
                         }
-                        curvedPlate.onDrawFrame(null);
+                        curvedPlate.onDrawPreviewPic();
                     }break;
                     case LTRenderMode.RENDER_MODE_360:{
                         if( !bowl.isInitialized ){
                             bowl.onSurfaceCreate(previewPicPathName, previewPicRawData);
                         }
-                        bowl.onDrawFrame(null);
+                        bowl.onDrawPreviewPic();
                     }break;
                     case LTRenderMode.RENDER_MODE_FOUR_EYE:{
                         if( !fourEye.isInitialized ){
                             fourEye.onSurfaceCreate(previewPicPathName, previewPicRawData);
                         }
-                        fourEye.onDrawFrame(null);
+                        fourEye.onDrawPreviewPic();
                     }break;
                     case LTRenderMode.RENDER_MODE_TWO_RECTANGLE:{
                         if( !rectangle.isInitialized ){
                             rectangle.onSurfaceCreate(previewPicPathName, previewPicRawData);
                         }
-                        rectangle.onDrawFrame(null);
+                        rectangle.onDrawPreviewPic();
                     }break;
                     case LTRenderMode.RENDER_MODE_CYLINDER:{
                         if( !cylinder.isInitialized ){
                             cylinder.onSurfaceCreate(previewPicPathName, previewPicRawData);
                         }
-                        cylinder.onDrawFrame(null);
+                        cylinder.onDrawPreviewPic();
                     }break;
                     default:
                         Log.w(TAG, "LangTao360RenderMgr RenderMode "+RENDER_MODE+" not recognized !!!");
                         break;
                 }
             }
-            Log.w(TAG, "LangTao360RenderMgr onDrawFrame on RENDER_MODE:"+RENDER_MODE+" PIC_OR_VIDEO:"+PIC_OR_VIDEO);
         }catch (Exception e){
             e.printStackTrace();
         }

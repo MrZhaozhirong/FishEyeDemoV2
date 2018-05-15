@@ -299,6 +299,26 @@ public class Cylinder {
         this.draw();
     }
 
+    public void onDrawPreviewPic() {
+        if (!this.isInitialized) return;
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+
+        GLES20.glUseProgram( shader.getShaderProgramId() );
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+        GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
+        GLES20.glUniform1i(shader.uLocationImageMode, 1);
+
+        updateCylinderMatrix();
+        setAttributeStatus();
+        if (isNeedAutoScroll) {
+            autoRotated();
+        }
+        this.draw();
+    }
+
 
     private boolean updateTexture(@NonNull YUVFrame yuvFrame) {
         if (yuvFrame == null || shader==null) return false;

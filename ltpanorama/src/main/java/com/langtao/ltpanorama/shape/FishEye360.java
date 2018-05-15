@@ -287,15 +287,33 @@ public class FishEye360 {
         GLES20.glEnable(GLES20.GL_CULL_FACE);
 
         GLES20.glUseProgram( fishShader.getShaderProgramId() );
-        if(frame!=null){
-            updateTexture(frame);
-            GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
-        }else{
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
-            GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
-            GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
+
+        updateTexture(frame);
+        GLES20.glUniform1i(fishShader.uLocationImageMode, 0);
+
+        updateBallMatrix();
+        if (isNeedAutoScroll) {
+            autoRotated();
         }
+        setAttributeStatus();
+        this.draw();
+    }
+
+    public void onDrawPreviewPic() {
+        if(!isInitialized) return;
+        GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+        GLES20.glClearColor(0.0f,0.0f,0.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glCullFace(GLES20.GL_BACK);
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
+
+        GLES20.glUseProgram( fishShader.getShaderProgramId() );
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+        GLES20.glUniform1i(fishShader.uLocationSamplerRGB, 0);
+        GLES20.glUniform1i(fishShader.uLocationImageMode, 1);
 
         updateBallMatrix();
         if (isNeedAutoScroll) {

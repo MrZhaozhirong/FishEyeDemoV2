@@ -311,15 +311,9 @@ public class TwoRectangle  {
             else  mShaderOffsetX = mShaderOffsetX-1.0f;
         }
         GLES20.glUseProgram(shader.getShaderProgramId());
-        if(frame!=null){
-            GLES20.glUniform1i(shader.uLocationImageMode, 0);
-            updateTexture(frame);
-        }else{
-            GLES20.glUniform1i(shader.uLocationImageMode, 1);
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
-            GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
-        }
+
+        GLES20.glUniform1i(shader.uLocationImageMode, 0);
+        updateTexture(frame);
 
         updateRectangleMatrix();
         setAttributeStatus();
@@ -329,6 +323,34 @@ public class TwoRectangle  {
             else  mShaderOffsetX = mShaderOffsetX+1.0f;
         }
     }
+
+    public void onDrawPreviewPic() {
+        if(!isInitialized) return;
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glCullFace(GLES20.GL_BACK);
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
+        GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+        if (isNeedAutoScroll) {
+            if(direction == 0) mShaderOffsetX = mShaderOffsetX+1.0f;
+            else  mShaderOffsetX = mShaderOffsetX-1.0f;
+        }
+        GLES20.glUseProgram(shader.getShaderProgramId());
+
+        GLES20.glUniform1i(shader.uLocationImageMode, 1);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+        GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
+
+        updateRectangleMatrix();
+        setAttributeStatus();
+        this.draw();
+        if (isNeedAutoScroll) {
+            if(direction == 0) mShaderOffsetX = mShaderOffsetX-1.0f;
+            else  mShaderOffsetX = mShaderOffsetX+1.0f;
+        }
+    }
+
 
 
 

@@ -308,6 +308,26 @@ public class FishEye180 {
         this.draw();
     }
 
+    public void onDrawPreviewPic() {
+        if(!isInitialized) return;
+
+        GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+        GLES20.glClearColor(0.0f,0.0f,0.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glCullFace(GLES20.GL_BACK);
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
+
+        GLES20.glUniform1i(shader.uLocationImageMode, 1);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
+        GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
+
+        setAttributeStatus();
+        this.updateCruise();
+        this.updateMatrix();
+        this.draw();
+    }
 
 
     //================================操作封装==================================================================
