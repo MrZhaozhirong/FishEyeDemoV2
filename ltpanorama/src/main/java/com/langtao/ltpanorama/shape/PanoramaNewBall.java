@@ -237,8 +237,8 @@ public class PanoramaNewBall {
 
     public int nextControlMode() {
         if(updateingBallControlMode)
-            return currentControlMode;
-
+            return targetControlMode;
+        this.gestureInertia_isStop_sync = true;
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
             targetEye.setCameraVector(0, 0, -1.0f);
