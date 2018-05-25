@@ -437,7 +437,15 @@ public class PanoTemplateBall {
         }
     }
 
-
+    public void onDrawFrame(YUVFrame frame) {
+        if(this.isInitialized && this.isBootAnimation) {
+            this.updateBallControlMode();
+            //不能放在frame！=null 因为buffer==null会造成状态切换动画不流畅
+        }
+        this.updateTexture(frame);
+        this.updateBallMatrix();
+        this.draw();
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

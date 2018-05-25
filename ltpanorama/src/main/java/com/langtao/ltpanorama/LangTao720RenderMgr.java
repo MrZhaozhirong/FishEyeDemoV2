@@ -105,33 +105,18 @@ public class LangTao720RenderMgr extends LTRenderManager {
         try {
             if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
                 YUVFrame buffer = mCircularBuffer.getFrame();
-                if(buffer != null){
-                    if(!templateBall.isInitialized) {
-                        templateBall.onSurfaceCreated(
-                                panoTemplateConfigFile_gid,
-                                panoTemplateConfigFileName_AbsolutePath);
-                    }
-                    templateBall.updateTexture(buffer);
+
+                if(!templateBall.isInitialized) {
+                    templateBall.onSurfaceCreated(
+                            panoTemplateConfigFile_gid,
+                            panoTemplateConfigFileName_AbsolutePath);
                 }
-                if(templateBall.isInitialized && templateBall.isBootAnimation) {
-                    templateBall.updateBallControlMode();
-                    //不能放在buffer！=null 因为buffer==null会造成状态切换动画的卡顿
-                }
-                templateBall.updateBallMatrix();
-                templateBall.draw();
+                templateBall.onDrawFrame(buffer);
+
 
                 // 请求生成 2:1全景图
                 if(requestScreenShot ) {
-                    if(!panoTmRender.isInitialized ){
-                        panoTmRender.onEGLSurfaceCreated(
-                                panoTemplateConfigFile_gid,
-                                panoTemplateConfigFileName_AbsolutePath);
-                    }
-                    if(buffer!=null ){
-                        panoTmRender.initFBO(buffer.getWidth(), buffer.getHeight());
-                        panoTmRender.draw( buffer);
-                        requestScreenShot = false;
-                    }
+                    generatePanoramaPic(buffer);
                 }
                 if(buffer != null) buffer.release();
             }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
@@ -139,16 +124,27 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 if(!picBall.isInitialized) {
                     picBall.onSurfaceCreated(bitmap_path);
                 }
-                if(picBall.isInitialized && picBall.isBootAnimation) {
-                    picBall.updateBallControlMode();
-                }
-                picBall.updateBallMatrix();
-                picBall.draw();
+                picBall.onDrawPreviewPic();
             }else {
                 Log.e(TAG, "LangTao720RenderMgr onDrawFrame on Error PIC_OR_VIDEO.");
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+
+    //生成全景图。
+    private void generatePanoramaPic(YUVFrame frame) {
+        if(!panoTmRender.isInitialized ){
+            panoTmRender.onEGLSurfaceCreated(
+                    panoTemplateConfigFile_gid,
+                    panoTemplateConfigFileName_AbsolutePath);
+        }
+        if(frame !=null ){
+            panoTmRender.initFBO(frame.getWidth(), frame.getHeight());
+            panoTmRender.draw(frame);
+            requestScreenShot = false;
         }
     }
 

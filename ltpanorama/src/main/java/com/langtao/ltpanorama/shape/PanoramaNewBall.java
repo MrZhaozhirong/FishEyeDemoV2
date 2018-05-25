@@ -122,6 +122,18 @@ public class PanoramaNewBall {
                 currentEye.upx, currentEye.upy, currentEye.upz);//摄像机头顶方向向量
     }
 
+    public void onDrawPreviewPic() {
+        if(this.isInitialized && this.isBootAnimation) {
+            this.updateBallControlMode();
+        }
+        this.updateBallMatrix();
+        this.draw();
+    }
+
+    public void onDrawFrame() {
+
+    }
+
     public void draw(){
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
