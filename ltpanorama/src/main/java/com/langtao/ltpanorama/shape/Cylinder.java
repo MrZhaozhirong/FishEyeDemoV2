@@ -282,15 +282,10 @@ public class Cylinder {
         GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
 
         GLES20.glUseProgram( shader.getShaderProgramId() );
-        if(frame!=null){
-            updateTexture(frame);
-            GLES20.glUniform1i(shader.uLocationImageMode, 0);
-        }else{
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
-            GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
-            GLES20.glUniform1i(shader.uLocationImageMode, 1);
-        }
+
+        updateTexture(frame);
+        GLES20.glUniform1i(shader.uLocationImageMode, 0);
+
         updateCylinderMatrix();
         setAttributeStatus();
         if (isNeedAutoScroll) {
@@ -320,7 +315,7 @@ public class Cylinder {
     }
 
 
-    private boolean updateTexture(@NonNull YUVFrame yuvFrame) {
+    private boolean updateTexture(YUVFrame yuvFrame) {
         if (yuvFrame == null || shader==null) return false;
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
