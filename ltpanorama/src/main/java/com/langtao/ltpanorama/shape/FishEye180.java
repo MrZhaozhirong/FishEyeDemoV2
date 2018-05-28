@@ -292,15 +292,9 @@ public class FishEye180 {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
-        if(frame!=null) {
-            updateTexture(frame);
-            GLES20.glUniform1i(shader.uLocationImageMode, 0);
-        }else{
-            GLES20.glUniform1i(shader.uLocationImageMode, 1);
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, _yuvTextureIDs[0]);
-            GLES20.glUniform1i(shader.uLocationSamplerRGB, 0);
-        }
+        GLES20.glUseProgram( shader.getShaderProgramId() );
+        updateTexture(frame);
+        GLES20.glUniform1i(shader.uLocationImageMode, 0);
 
         setAttributeStatus();
         this.updateCruise();
