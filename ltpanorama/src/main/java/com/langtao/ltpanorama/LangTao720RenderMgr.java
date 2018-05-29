@@ -5,6 +5,7 @@ import android.util.Log;
 import com.langtao.ltpanorama.component.YUVFrame;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.ltpanorama.shape.PanoTemplateBall;
+import com.langtao.ltpanorama.shape.PanoTemplateFour;
 import com.langtao.ltpanorama.shape.PanoTemplateRectangleFBO;
 import com.langtao.ltpanorama.shape.PanoramaNewBall;
 
@@ -19,8 +20,10 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class LangTao720RenderMgr extends LTRenderManager {
     private static final String TAG = LTRenderManager.TAG+"-720";
-    private static final String PIC = "PIC";
-    private static final String VIDEO = "VIDEO";
+    public static final String LT_PANORAMA_PIC = "LT_PANORAMA_PIC";
+    public static final String LT_PANORAMA_VIDEO = "LT_PANORAMA_VIDEO";
+    public static final String LT_PANORAMA_ANIMATION_3 = "LT_PANORAMA_ANIMATION_3_";
+    public static final String LT_PANORAMA_SCREEN_4 = "LT_PANORAMA_SCREEN_4";
 
     public LangTao720RenderMgr() {
         super();
@@ -54,79 +57,99 @@ public class LangTao720RenderMgr extends LTRenderManager {
 
 
 
-    // 设置 申请2:1全景图回调
+    // 设置请求生成 2:1全景图 回调
     private volatile boolean requestScreenShot = false;
     public void getPanoramaPicture(final PanoTemplateRectangleFBO.ScreenShotReadyCallback callback){
-        if(panoTmRender != null && callback!=null){
+        if(panoPicGenerator != null && callback!=null){
             // 放线程处理，不要阻塞，否则会爆炸 重申第二次
-            panoTmRender.requestScreenShot(callback);
+            panoPicGenerator.requestScreenShot(callback);
             requestScreenShot = true;
         }
     }
 
     // 静态预览图
     private String bitmap_path = null;
-    private String PIC_OR_VIDEO = VIDEO; //default
     public void setPreviewPanoramaPicture(String bitmap_path){
         this.bitmap_path = bitmap_path;
     }
-    public void setPlayVideo() {
-        PIC_OR_VIDEO = VIDEO;
+
+    private String panoRenderType = LT_PANORAMA_ANIMATION_3;
+    private String PIC_OR_VIDEO = LT_PANORAMA_VIDEO;
+    public void setPanoramaMode(String mode) {
+        if(LT_PANORAMA_ANIMATION_3.equalsIgnoreCase(mode) ||
+                LT_PANORAMA_SCREEN_4.equalsIgnoreCase(mode) )
+            panoRenderType = mode;
     }
-    public void setPreviewPic() {
-        PIC_OR_VIDEO = PIC;
+    public void setPanoRenderType(String type) {
+        if(LT_PANORAMA_PIC.equalsIgnoreCase(type) ||
+                LT_PANORAMA_VIDEO.equalsIgnoreCase(type) )
+            PIC_OR_VIDEO = type;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private PanoTemplateBall templateBall;//视频
-    private PanoTemplateRectangleFBO panoTmRender; //用于生成2:1全景图
-    private PanoramaNewBall picBall; //显示静态图
+    private PanoTemplateBall panoTmBall;//视频3动态切换
+    private PanoTemplateFour fourTmBall; //视频四分屏
+    private PanoTemplateRectangleFBO panoPicGenerator; //用于生成2:1全景图
+    private PanoramaNewBall picTmBall; //显示静态图
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         Log.w(TAG, "LangTao720RenderMgr onSurfaceCreated");
-        templateBall = new PanoTemplateBall(RENDER_MODE);
-        panoTmRender = new PanoTemplateRectangleFBO();
+        panoTmBall = new PanoTemplateBall(RENDER_MODE);
+        panoPicGenerator = new PanoTemplateRectangleFBO();
 
-        picBall = new PanoramaNewBall(RENDER_MODE);
+        picTmBall = new PanoramaNewBall(RENDER_MODE);
+        fourTmBall = new PanoTemplateFour();
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        Log.w(TAG, "LangTao720RenderMgr onSurfaceChanged");
-        templateBall.onSurfaceChanged(width,height);
-        picBall.onSurfaceChanged(width, height);
+        Log.w(TAG, "LangTao720RenderMgr onSurfaceChanged "+width+" x "+height);
+        panoTmBall.onSurfaceChanged(width,height);
+        picTmBall.onSurfaceChanged(width, height);
+        fourTmBall.onSurfaceChanged(width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        //Log.v(TAG, "LangTao720RenderMgr onDrawFrame "+PIC_OR_VIDEO);
         try {
-            if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
+            if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_VIDEO)) {
                 YUVFrame buffer = mCircularBuffer.getFrame();
-
-                if(!templateBall.isInitialized) {
-                    templateBall.onSurfaceCreated(
-                            panoTemplateConfigFile_gid,
-                            panoTemplateConfigFileName_AbsolutePath);
-                }
-                templateBall.onDrawFrame(buffer);
-
-
-                // 请求生成 2:1全景图
-                if(requestScreenShot ) {
-                    generatePanoramaPic(buffer);
+                if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
+                    if(!panoTmBall.isInitialized && buffer!=null) {
+                        panoTmBall.onSurfaceCreated(
+                                panoTemplateConfigFile_gid,
+                                panoTemplateConfigFileName_AbsolutePath);
+                    }
+                    panoTmBall.onDrawFrame(buffer);
+                    // 请求生成 2:1全景图
+                    if(requestScreenShot && buffer!=null) {
+                        generatePanoramaPic(buffer);
+                    }
+                }else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+                    if(!fourTmBall.isInitialized && buffer!=null) {
+                        fourTmBall.onSurfaceCreated(
+                                panoTemplateConfigFile_gid,
+                                panoTemplateConfigFileName_AbsolutePath);
+                    }
+                    fourTmBall.onDrawFrame(buffer);
                 }
                 if(buffer != null) buffer.release();
-            }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-                // 静态预览图模式
-                if(!picBall.isInitialized) {
-                    picBall.onSurfaceCreated(bitmap_path);
+            }
+            else
+            {//LT_PANORAMA_PIC
+                if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
+                    if(!picTmBall.isInitialized) {
+                        picTmBall.onSurfaceCreated(bitmap_path);
+                    }
+                    picTmBall.onDrawPreviewPic3();
+                }else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+                    if(!picTmBall.isInitialized) {
+                        picTmBall.onSurfaceCreated(bitmap_path);
+                    }
+                    picTmBall.onDrawPreviewPic4();
                 }
-                picBall.onDrawPreviewPic();
-            }else {
-                Log.e(TAG, "LangTao720RenderMgr onDrawFrame on Error PIC_OR_VIDEO.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -136,14 +159,14 @@ public class LangTao720RenderMgr extends LTRenderManager {
 
     //生成全景图。
     private void generatePanoramaPic(YUVFrame frame) {
-        if(!panoTmRender.isInitialized ){
-            panoTmRender.onEGLSurfaceCreated(
+        if(!panoPicGenerator.isInitialized ){
+            panoPicGenerator.onEGLSurfaceCreated(
                     panoTemplateConfigFile_gid,
                     panoTemplateConfigFileName_AbsolutePath);
         }
         if(frame !=null ){
-            panoTmRender.initFBO(frame.getWidth(), frame.getHeight());
-            panoTmRender.draw(frame);
+            panoPicGenerator.initFBO(frame.getWidth(), frame.getHeight());
+            panoPicGenerator.draw(frame);
             requestScreenShot = false;
         }
     }
@@ -153,70 +176,104 @@ public class LangTao720RenderMgr extends LTRenderManager {
     @Override
     public void setRenderMode(int mode) {
         super.setRenderMode(mode);
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.setRenderMode(mode);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.setRenderMode(mode);
-        }
     }
-
 
     @Override
-    public void handleDoubleClick() {
-
-    }
+    public void handleDoubleClick() { }
 
     @Override
     public void handleMultiTouch(float distance) {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.handleMultiTouch(distance);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.handleMultiTouch(distance);
+        if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)
+                && PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                picTmBall.handleMultiTouch(distance);
+        }
+        else// LT_PANORAMA_VIDEO
+        {
+            if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+                if(fourTmBall !=null)
+                    fourTmBall.handleMultiTouch(distance);
+            }
+            else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)){
+                if(panoTmBall !=null)
+                    panoTmBall.handleMultiTouch(distance);
+            }
         }
     }
     @Override
     public void handleTouchUp(final float x, final float y, final float xVelocity, final float yVelocity) {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.handleTouchUp(x, y, xVelocity, yVelocity);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.handleTouchUp(x, y, xVelocity, yVelocity);
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                picTmBall.handleTouchUp(x, y, xVelocity, yVelocity);
         }
+        else// LT_PANORAMA_VIDEO
+        {
+            if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+                if(fourTmBall !=null)
+                    fourTmBall.handleTouchUp(x, y, xVelocity, yVelocity);
+            }
+            else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
+                if(panoTmBall !=null)
+                    panoTmBall.handleTouchUp(x, y, xVelocity, yVelocity);
+            }
+        }
+
     }
     @Override
     public void handleTouchDown(float x, float y) {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.handleTouchDown(x, y);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.handleTouchDown(x, y);
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                picTmBall.handleTouchDown(x, y);
+        }
+        else// LT_PANORAMA_VIDEO
+        {
+            if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
+                if(panoTmBall !=null)
+                    panoTmBall.handleTouchDown(x, y);
+            }
+            else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+                if(fourTmBall !=null)
+                    fourTmBall.handleTouchDown(x, y);
+            }
         }
     }
+
     @Override
     public void handleTouchMove(float x, float y) {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.handleTouchMove(x, y);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.handleTouchMove(x, y);
+
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                picTmBall.handleTouchMove(x, y);
+        }
+        else // LT_PANORAMA_VIDEO
+        {
+            if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
+                if(panoTmBall !=null)
+                    panoTmBall.handleTouchMove(x, y);
+            }
+            else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+                if(fourTmBall !=null)
+                    fourTmBall.handleTouchMove(x, y);
+            }
         }
     }
 
     @Override
     public void setAutoCruise(boolean autoCruise) {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.setAutoCruise(autoCruise);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.setAutoCruise(autoCruise);
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                picTmBall.setAutoCruise(autoCruise);
+        }
+        else
+        {
+            if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_VIDEO)) {
+                if(panoTmBall !=null)
+                    panoTmBall.setAutoCruise(autoCruise);
+            }
+            else if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_VIDEO)) {
+                if(fourTmBall !=null)
+                    fourTmBall.setAutoCruise(autoCruise);
+            }
         }
     }
 
@@ -224,23 +281,29 @@ public class LangTao720RenderMgr extends LTRenderManager {
 
     // 水晶球->鱼眼->小行星
     public int nextModelShape() {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                RENDER_MODE = templateBall.nextControlMode();
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                RENDER_MODE = picBall.nextControlMode();
+        if(!panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3))
+            return RENDER_MODE;
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_VIDEO)) {
+            if(panoTmBall !=null)
+                RENDER_MODE = panoTmBall.nextControlMode();
+        }
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                RENDER_MODE = picTmBall.nextControlMode();
         }
         return RENDER_MODE;
     }
     // 水晶球<-鱼眼
     public int fishEyeReturnToCrystal() {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                RENDER_MODE = templateBall.fishEyeReturnToCrystal();
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                RENDER_MODE = picBall.fishEyeReturnToCrystal();
+        if(!panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3))
+            return RENDER_MODE;
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_VIDEO)) {
+            if(panoTmBall !=null)
+                RENDER_MODE = panoTmBall.fishEyeReturnToCrystal();
+        }
+        if(PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                RENDER_MODE = picTmBall.fishEyeReturnToCrystal();
         }
         return RENDER_MODE;
     }
@@ -252,12 +315,15 @@ public class LangTao720RenderMgr extends LTRenderManager {
      * @param zAngle
      */
     public void renderRotateVR(float xAngle, float yAngle, float zAngle) {
-        if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
-            if(templateBall!=null)
-                templateBall.renderRotateVR(xAngle, yAngle, zAngle);
-        }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
-            if(picBall!=null)
-                picBall.renderRotateVR(xAngle, yAngle, zAngle);
+        if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)
+                && PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_VIDEO)) {
+            if(panoTmBall !=null)
+                panoTmBall.renderRotateVR(xAngle, yAngle, zAngle);
+        }
+        if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)
+                && PIC_OR_VIDEO.equalsIgnoreCase(LT_PANORAMA_PIC)){
+            if(picTmBall !=null)
+                picTmBall.renderRotateVR(xAngle, yAngle, zAngle);
         }
     }
 }
