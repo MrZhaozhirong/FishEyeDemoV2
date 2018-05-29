@@ -23,7 +23,7 @@
                 style="?android:attr/textAppearance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="v701861643"
+                android:text="v70141387f"
                 android:maxLines="1"/>
             <Space
                 android:layout_width="2dp"
@@ -43,7 +43,7 @@
                 style="?android:attr/textAppearance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="admin"
+                android:text="123456"
                 android:maxLines="1"/>
             <Space
                 android:layout_width="2dp"
@@ -94,9 +94,9 @@
                 android:layout_height="match_parent"/>
             <Button
                 android:id="@+id/next_mode"
-                android:layout_width="55dp"
+                android:layout_width="88dp"
                 android:layout_height="wrap_content"
-                android:text="变形"
+                android:text="3模式切换"
                 android:onClick="clickNextMode"/>
             <Space
                 android:layout_width="2dp"
@@ -123,7 +123,7 @@
             android:orientation="horizontal">
             <Button
                 android:id="@+id/capture_screen"
-                android:layout_width="wrap_content"
+                android:layout_width="70dp"
                 android:layout_height="wrap_content"
                 android:text="缩略图"/>
             <Space
@@ -134,6 +134,24 @@
                 android:layout_width="45dp"
                 android:layout_height="45dp"
                 android:src="@android:color/holo_red_light"/>
+            <Space
+                android:layout_width="2dp"
+                android:layout_height="wrap_content"/>
+            <Button
+                android:id="@+id/four_screen"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:text="4分屏"
+                android:onClick="clickPanoFourScreen"/>
+            <Space
+                android:layout_width="2dp"
+                android:layout_height="wrap_content"/>
+            <Button
+                android:id="@+id/three_mode"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:text="3模式"
+                android:onClick="clickPanoThreeMode"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -143,11 +161,6 @@
         android:id="@+id/gl_view"
         android:layout_width="350dp"
         android:layout_height="350dp"/-->
-    <RelativeLayout
-            android:layout_below="@id/control_weight"
-            android:id="@+id/gl_view_container"
-            android:layout_width="350dp"
-            android:layout_height="350dp"/>
 
     <TextView
         android:layout_below="@id/gl_view_container"
@@ -163,4 +176,11 @@
         android:fadeScrollbars="false"
         android:scrollbarFadeDuration="2000"
         android:background="#00000000"/>
+
+    <RelativeLayout
+        android:id="@+id/gl_view_container"
+        android:layout_width="400dp"
+        android:layout_height="400dp"
+        android:layout_below="@+id/control_weight"
+        android:layout_alignParentStart="true"/>
 </RelativeLayout>

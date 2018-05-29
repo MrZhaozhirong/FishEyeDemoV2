@@ -188,6 +188,12 @@ public class LangTao720Activity extends Activity {
     public void clickAddGid(@SuppressLint("USELESS") View view) {
         EditText gid = (EditText) findViewById(R.id.gid);
         GlnkClient.getInstance().addGID(gid.getText().toString());
+
+        File ConfigFile = new File(getPanoramaConfigFilePath(false));
+        if(ConfigFile.exists()){
+            ((LangTao720RenderMgr)mLT720RenderMgr).setPanoTemConfigFile(getPanoramaConfigFilePath(false));
+            ((LangTao720RenderMgr)mLT720RenderMgr).setPanoTemSecretKey(gid.getText().toString());
+        }
     }
 
     public void clickConnect(@SuppressLint("USELESS") View view) {
@@ -214,6 +220,22 @@ public class LangTao720Activity extends Activity {
         if(mLT720RenderMgr!=null){
             if(mLT720RenderMgr instanceof LangTao720RenderMgr)
                 ((LangTao720RenderMgr)mLT720RenderMgr).nextModelShape();
+        }
+    }
+
+    public void clickPanoFourScreen(@SuppressLint("USELESS") View view) {
+        if(mLT720RenderMgr!=null) {
+            if(mLT720RenderMgr instanceof LangTao720RenderMgr){
+                ((LangTao720RenderMgr)mLT720RenderMgr).setPanoramaMode(LangTao720RenderMgr.LT_PANORAMA_SCREEN_4);
+            }
+        }
+    }
+
+    public void clickPanoThreeMode(View view) {
+        if(mLT720RenderMgr!=null) {
+            if(mLT720RenderMgr instanceof LangTao720RenderMgr){
+                ((LangTao720RenderMgr)mLT720RenderMgr).setPanoramaMode(LangTao720RenderMgr.LT_PANORAMA_ANIMATION_3);
+            }
         }
     }
 
@@ -436,8 +458,6 @@ public class LangTao720Activity extends Activity {
         void onBitmapReady(Bitmap bitmap);
     }
 
-
-
     /////////////////// 2:1全景图 start//////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -448,7 +468,7 @@ public class LangTao720Activity extends Activity {
             if(mLT720RenderMgr instanceof LangTao720RenderMgr){
                 ((LangTao720RenderMgr)mLT720RenderMgr).setPreviewPanoramaPicture(
                         PanoramaScreenshot_path+File.separator+"_LTPanorama.JPG");
-                ((LangTao720RenderMgr)mLT720RenderMgr).setPreviewPic();
+                ((LangTao720RenderMgr)mLT720RenderMgr).setPanoRenderType(LangTao720RenderMgr.LT_PANORAMA_PIC);
             }
         }
     }

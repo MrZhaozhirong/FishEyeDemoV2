@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.langtao.PermissionUtils;
+import com.langtao.device.SDKinitUtil;
 import com.langtao.reborn.h264.RawH264Activity;
 import com.langtao.reborn.pack180.LangTao180Activity;
 import com.langtao.reborn.pack360.LangTao360Activity;
@@ -107,5 +108,12 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     protected void onPause() {
         super.onPause();
         Log.w("HomeActivity", "onPause");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.w("HomeActivity", "onPause");
+        SDKinitUtil.release();
     }
 }
