@@ -190,14 +190,14 @@ public class LangTao720RenderMgr extends LTRenderManager {
         }
         else// LT_PANORAMA_VIDEO
         {
-            if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
-                if(fourTmBall !=null)
-                    fourTmBall.handleMultiTouch(distance);
-            }
-            else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)){
+            if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)){
                 if(panoTmBall !=null)
                     panoTmBall.handleMultiTouch(distance);
             }
+            //else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+            //    if(fourTmBall !=null)
+            //        fourTmBall.handleMultiTouch(distance);
+            //}
         }
     }
     @Override

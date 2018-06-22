@@ -367,9 +367,9 @@ public class PanoTemplateFour {
             currentEye = new CameraViewport();
 
         // 初始化 鱼眼
-        currentOverture = ASTEROID_MIN_OVERTURE;
+        currentOverture = 35f;// ASTEROID_MIN_OVERTURE;
         currentControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
-        currentEye.setCameraVector(0, 0, -1.0f);
+        currentEye.setCameraVector(0, 0, -0.65f);
         currentEye.setTargetViewVector(0f, 0f, 0.0f);
         currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
     }
