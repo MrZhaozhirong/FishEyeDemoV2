@@ -272,11 +272,11 @@ public class PanoramaNewBall {
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
             currentEye.copyTo(targetEye);
         }
-        // 初始化 鱼眼
-        fourOverture = ASTEROID_MIN_OVERTURE;
-        fourEye.setCameraVector(0, 0, -1.0f);
-        fourEye.setTargetViewVector(0f, 0f, 0.0f);
-        fourEye.setCameraUpVector(0f, 1.0f, 0.0f);
+        // 初始化
+        currentOverture = 35f;// ASTEROID_MIN_OVERTURE;
+        currentEye.setCameraVector(0, 0, -0.65f);
+        currentEye.setTargetViewVector(0f, 0f, 0.0f);
+        currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
     }
 
     public int nextControlMode() {
