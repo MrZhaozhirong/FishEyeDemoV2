@@ -23,7 +23,7 @@
                 style="?android:attr/textAppearance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="v70141387f"
+                android:text="v7020d103f"
                 android:maxLines="1"/>
             <Space
                 android:layout_width="2dp"
@@ -117,7 +117,9 @@
                 android:text="预览全景图"
                 android:onClick="clickPreviewPicPanorama"/>
         </LinearLayout>
+
         <LinearLayout
+            android:id="@+id/third"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -139,9 +141,9 @@
                 android:layout_height="wrap_content"/>
             <Button
                 android:id="@+id/four_screen"
-                android:layout_width="60dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
-                android:text="4分屏"
+                android:text="4分屏(横屏)"
                 android:onClick="clickPanoFourScreen"/>
             <Space
                 android:layout_width="2dp"
@@ -162,6 +164,15 @@
         android:layout_width="350dp"
         android:layout_height="350dp"/-->
 
+
+    <RelativeLayout
+        android:id="@+id/gl_view_container"
+        android:layout_width="400dp"
+        android:layout_height="400dp"
+        android:layout_below="@+id/control_weight"
+        android:layout_alignParentStart="true"/>
+
+
     <TextView
         android:layout_below="@id/gl_view_container"
         android:id="@+id/logView2"
@@ -176,11 +187,4 @@
         android:fadeScrollbars="false"
         android:scrollbarFadeDuration="2000"
         android:background="#00000000"/>
-
-    <RelativeLayout
-        android:id="@+id/gl_view_container"
-        android:layout_width="400dp"
-        android:layout_height="400dp"
-        android:layout_below="@+id/control_weight"
-        android:layout_alignParentStart="true"/>
 </RelativeLayout>

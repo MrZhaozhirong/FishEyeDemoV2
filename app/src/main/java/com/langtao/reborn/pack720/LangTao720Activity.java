@@ -6,6 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLException;
@@ -16,9 +18,13 @@ import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -27,6 +33,7 @@ import android.widget.Toast;
 
 import com.langtao.device.DevCapability;
 import com.langtao.device.DeviceStatusManager;
+import com.langtao.device.GlnkApplication;
 import com.langtao.device.SDKinitUtil;
 import com.langtao.ltpanorama.LTRenderManager;
 import com.langtao.ltpanorama.LangTao720RenderMgr;
@@ -96,6 +103,9 @@ public class LangTao720Activity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.w(TAG, TAG+" onCreate");
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_720);
         logView=(TextView)findViewById(R.id.logView2);
         logView.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -185,6 +195,40 @@ public class LangTao720Activity extends Activity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(deviceStatusReceiver);
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if(this.getResources().getConfiguration().orientation ==Configuration.ORIENTATION_LANDSCAPE) {
+            findViewById(R.id.control_weight).setVisibility(View.GONE);
+            findViewById(R.id.logView2).setVisibility(View.GONE);
+
+            ViewGroup.LayoutParams layoutParams = gl_view_container.getLayoutParams();
+            layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            gl_view_container.setLayoutParams(layoutParams);
+
+        } else if(this.getResources().getConfiguration().orientation ==Configuration.ORIENTATION_PORTRAIT) {
+            findViewById(R.id.control_weight).setVisibility(View.VISIBLE);
+            findViewById(R.id.logView2).setVisibility(View.VISIBLE);
+
+            ViewGroup.LayoutParams layoutParams = gl_view_container.getLayoutParams();
+            layoutParams.width = (int) GlnkApplication.dip2px(400f);
+            layoutParams.height = (int) GlnkApplication.dip2px(400f);
+            gl_view_container.setLayoutParams(layoutParams);
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(this.getResources().getConfiguration().orientation
+                ==Configuration.ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            return true;
+        }else{
+            return super.onKeyDown(keyCode, event);
+        }
+    }
+
     public void clickAddGid(@SuppressLint("USELESS") View view) {
         EditText gid = (EditText) findViewById(R.id.gid);
         GlnkClient.getInstance().addGID(gid.getText().toString());
@@ -224,6 +268,8 @@ public class LangTao720Activity extends Activity {
     }
 
     public void clickPanoFourScreen(@SuppressLint("USELESS") View view) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
         if(mLT720RenderMgr!=null) {
             if(mLT720RenderMgr instanceof LangTao720RenderMgr){
                 ((LangTao720RenderMgr)mLT720RenderMgr).setPanoramaMode(LangTao720RenderMgr.LT_PANORAMA_SCREEN_4);
