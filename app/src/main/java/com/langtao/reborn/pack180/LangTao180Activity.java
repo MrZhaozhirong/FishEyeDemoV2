@@ -14,7 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.langtao.device.SDKinitUtil;
-import com.langtao.ltpanorama.LangTao360RenderMgr;
+import com.langtao.ltpanorama.LangTao180RenderMgr;
 import com.langtao.ltpanorama.component.YUVFrame;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.reborn.R;
@@ -47,7 +47,7 @@ public class LangTao180Activity extends Activity {
     //dataType流数据类型, 0-视频流, 1-音频流, 2-音视频流
     private int channelNo=0, streamType=0, dataType=2;
 
-    private LangTao360RenderMgr mLT180RenderMgr;
+    private LangTao180RenderMgr mLT180RenderMgr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +64,7 @@ public class LangTao180Activity extends Activity {
         gl_view_container.removeAllViews();
         if( SDKinitUtil.checkGLEnvironment() ){
             if(mLT180RenderMgr==null)
-                mLT180RenderMgr = new LangTao360RenderMgr();
+                mLT180RenderMgr = new LangTao180RenderMgr();
             mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180);
             gl_view = new GLSurfaceView(LangTao180Activity.this);
             gl_view.setEGLContextClientVersion(2);
@@ -154,6 +154,18 @@ public class LangTao180Activity extends Activity {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
         return (float) Math.sqrt(x * x + y * y);
+    }
+
+    public void clickCurved(@SuppressLint("USELESS")  View view) {
+        if(mLT180RenderMgr != null){
+            mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180);
+        }
+    }
+
+    public void clickPaved(@SuppressLint("USELESS") View view) {
+        if(mLT180RenderMgr != null){
+            mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180_PAVED);
+        }
     }
 
     private class GLViewTouchListener implements View.OnTouchListener {

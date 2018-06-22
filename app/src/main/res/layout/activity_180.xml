@@ -15,7 +15,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ck030811ff"
+            android:text="8041659c"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -128,9 +128,36 @@
         </LinearLayout>
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/third"
+        android:layout_below="@id/second"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/curved"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="曲面"
+            android:onClick="clickCurved" />
+
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            android:id="@+id/paved"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="平面"
+            android:onClick="clickPaved" />
+    </LinearLayout>
+
+
 
     <RelativeLayout
-        android:layout_below="@id/second"
+        android:layout_below="@id/third"
         android:id="@+id/gl_view_container"
         android:layout_width="350dp"
         android:layout_height="350dp"/>
