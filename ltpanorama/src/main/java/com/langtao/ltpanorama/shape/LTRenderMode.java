@@ -15,6 +15,7 @@ public class LTRenderMode {
     public static final int RENDER_MODE_CYLINDER = 360*2/3;     //540
 
     public static final int RENDER_MODE_180 = 180;
+    public static final int RENDER_MODE_180_PAVED = 180+1;
 
     public static final int RENDER_MODE_CRYSTAL = 720;  //水晶球
     public static final int RENDER_MODE_NORMAL = 720+1; //普通透视

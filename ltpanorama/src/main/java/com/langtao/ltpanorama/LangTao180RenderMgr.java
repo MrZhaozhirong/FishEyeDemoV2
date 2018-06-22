@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.langtao.ltpanorama.component.YUVFrame;
 import com.langtao.ltpanorama.shape.FishEye180;
+import com.langtao.ltpanorama.shape.FishEye180Rectangle;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -24,33 +25,42 @@ public class LangTao180RenderMgr extends LTRenderManager {
     }
 
     private FishEye180 curvedPlate;
+    private FishEye180Rectangle pavedRect;
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         Log.w(TAG, "LangTao180RenderMgr onSurfaceCreated");
         curvedPlate = new FishEye180();
+        pavedRect = new FishEye180Rectangle();
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         Log.w(TAG, "LangTao180RenderMgr onSurfaceChanged");
         curvedPlate.onSurfaceChange(width, height);
+        pavedRect.onSurfaceChange(width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         try {
-            YUVFrame buffer = mCircularBuffer.getFrame();
-            if(buffer != null){
-                if(!curvedPlate.isInitialized)
-                    curvedPlate.onSurfaceCreate(buffer);
-
-                curvedPlate.updateTexture(buffer);
-                buffer.release();
+            YUVFrame frame = mCircularBuffer.getFrame();
+            switch (RENDER_MODE) {
+                case LTRenderMode.RENDER_MODE_180: {
+                    if (!curvedPlate.isInitialized) {
+                        curvedPlate.onSurfaceCreate(frame);
+                    }
+                    curvedPlate.onDrawFrame(frame);
+                }break;
+                case LTRenderMode.RENDER_MODE_180_PAVED: {
+                    if (!pavedRect.isInitialized) {
+                        pavedRect.onSurfaceCreate(frame);
+                    }
+                    pavedRect.onDrawFrame(frame);
+                }break;
             }
-            curvedPlate.updateCruise();
-            curvedPlate.updateMatrix();
-            curvedPlate.draw();
+
+            if(frame!=null) frame.release();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -65,19 +75,44 @@ public class LangTao180RenderMgr extends LTRenderManager {
 
     @Override
     public void handleTouchUp(final float x, final float y, final float xVelocity, final float yVelocity) {
-        if(curvedPlate!=null)
-            curvedPlate.handleTouchUp(x, y, xVelocity, yVelocity);
+        switch (RENDER_MODE) {
+            case LTRenderMode.RENDER_MODE_180: {
+                if(curvedPlate!=null)
+                    curvedPlate.handleTouchUp(x, y, xVelocity, yVelocity);
+            }break;
+            case LTRenderMode.RENDER_MODE_180_PAVED: {
+                if(pavedRect!=null)
+                    pavedRect.handleTouchUp(x, y, xVelocity, yVelocity);
+            }break;
+        }
     }
     @Override
     public void handleTouchDown(float x, float y) {
-        if(curvedPlate!=null)
-            curvedPlate.handleTouchDown(x, y);
+        switch (RENDER_MODE) {
+            case LTRenderMode.RENDER_MODE_180: {
+                if(curvedPlate!=null)
+                    curvedPlate.handleTouchDown(x, y);
+            }break;
+            case LTRenderMode.RENDER_MODE_180_PAVED: {
+                if(pavedRect!=null)
+                    pavedRect.handleTouchDown(x, y);
+            }break;
+        }
     }
     @Override
     public void handleTouchMove(float x, float y) {
-        if(curvedPlate!=null)
-            curvedPlate.handleTouchMove(x, y);
+        switch (RENDER_MODE) {
+            case LTRenderMode.RENDER_MODE_180: {
+                if(curvedPlate!=null)
+                    curvedPlate.handleTouchMove(x, y);
+            }break;
+            case LTRenderMode.RENDER_MODE_180_PAVED: {
+                if(pavedRect!=null)
+                    pavedRect.handleTouchMove(x, y);
+            }break;
+        }
     }
+
     @Override
     public void handleMultiTouch(float distance) {
         if(curvedPlate!=null)
