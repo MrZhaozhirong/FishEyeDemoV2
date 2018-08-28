@@ -117,6 +117,11 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
     }
 
     @Override
+    public void onDevNewLbs(String s, int i) {
+
+    }
+
+    @Override
     public void onStAuthResult(String s) {
 
     }

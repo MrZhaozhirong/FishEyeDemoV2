@@ -1,6 +1,9 @@
-package com.langtao.codec;
+package com.langtao.reborn.h264;
 
 import android.view.Surface;
+
+import com.langtao.codec.audioFrame;
+import com.langtao.codec.videoFrame;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -12,7 +15,7 @@ import glnk.client.GlnkStreamFormat;
  * Created by zzr on 2017/12/22.
  */
 
-public class LangTaoCodecRenderer  {
+public class LangTaoDecoder  {
 
     private GlnkStreamFormat liveStreamFmt;
     private static volatile BlockingQueue<videoFrame> video_data_queue = new ArrayBlockingQueue<videoFrame>(1000);
@@ -26,7 +29,7 @@ public class LangTaoCodecRenderer  {
     private boolean isPlaying ;
 
 
-    public LangTaoCodecRenderer(Surface outputSurface) {
+    public LangTaoDecoder(Surface outputSurface) {
         mOutputSurface = outputSurface;
         videoDecoder = new VideoDecoder(this);
         isPrepare = false;

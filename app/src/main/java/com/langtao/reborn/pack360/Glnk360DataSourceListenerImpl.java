@@ -2,8 +2,6 @@ package com.langtao.reborn.pack360;
 
 import android.util.Log;
 
-import com.langtao.reborn.pack180.LangTao180Activity;
-
 import glnk.media.GlnkDataSourceListener;
 
 /**
@@ -112,6 +110,11 @@ public class Glnk360DataSourceListenerImpl implements GlnkDataSourceListener {
 
     @Override
     public void onAppVideoFrameRate(int i) {
+
+    }
+
+    @Override
+    public void onJsonDataRsp(byte[] bytes) {
 
     }
 }

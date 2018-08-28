@@ -40,10 +40,20 @@
             android:layout_height="wrap_content" />
 
         <Button
-            android:id="@+id/btn_h264"
+            android:id="@+id/btn_decode_h264"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="h264"/>
+            android:text="解码h264"/>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_encode_h264"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="编码h264"/>
 
         <Space
             android:layout_width="wrap_content"

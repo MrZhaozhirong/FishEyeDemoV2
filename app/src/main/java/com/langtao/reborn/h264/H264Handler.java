@@ -13,15 +13,15 @@ class H264Handler extends Handler {
     static final int LOG_MSG = 1;
     static final int SHOW_RATE = 2;
 
-    WeakReference<RawH264Activity> mActivity;
+    WeakReference<DecodeH264Activity> mActivity;
 
-    public H264Handler(RawH264Activity activity){
-        mActivity = new WeakReference<RawH264Activity>(activity);
+    public H264Handler(DecodeH264Activity activity){
+        mActivity = new WeakReference<DecodeH264Activity>(activity);
     }
 
     @Override
     public void handleMessage(Message msg) {
-        RawH264Activity activity = mActivity.get();
+        DecodeH264Activity activity = mActivity.get();
         if(activity==null)
             return;
         switch (msg.what) {

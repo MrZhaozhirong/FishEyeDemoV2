@@ -137,4 +137,9 @@ public class VideoSearchDataSourceListenerImpl implements GlnkDataSourceListener
 
     }
 
+    @Override
+    public void onJsonDataRsp(byte[] bytes) {
+
+    }
+
 }

@@ -4,7 +4,6 @@ package com.langtao.reborn.h264;
 import android.os.Handler;
 import android.os.Message;
 
-import com.langtao.codec.LangTaoCodecRenderer;
 import com.langtao.codec.videoFrame;
 
 import java.util.Locale;
@@ -18,9 +17,9 @@ import glnk.client.GlnkStreamFormat;
 
 public class LiveDataSourceImpl extends DataSourceListener2 {
     private Handler mHandler;
-    private LangTaoCodecRenderer mRenderer;
+    private LangTaoDecoder mRenderer;
 
-    public LiveDataSourceImpl(Handler handler, LangTaoCodecRenderer render) {
+    public LiveDataSourceImpl(Handler handler, LangTaoDecoder render) {
         mHandler = handler;
         mRenderer = render;
     }

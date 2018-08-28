@@ -48,7 +48,7 @@
                   android:screenOrientation="portrait"/>
         <activity android:name="com.langtao.reborn.pack180.LangTao180Activity"
                   android:screenOrientation="portrait"/>
-        <activity android:name="com.langtao.reborn.h264.RawH264Activity"
+        <activity android:name="com.langtao.reborn.h264.DecodeH264Activity"
                   android:screenOrientation="portrait"/>
 
         <activity android:name="com.langtao.reborn.TestMultiProcessActivity"

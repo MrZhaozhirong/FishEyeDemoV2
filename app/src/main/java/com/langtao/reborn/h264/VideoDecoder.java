@@ -1,11 +1,11 @@
-package com.langtao.codec;
+package com.langtao.reborn.h264;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
-import com.langtao.reborn.h264.RawH264Activity;
+import com.langtao.codec.videoFrame;
 
 import java.nio.ByteBuffer;
 
@@ -16,15 +16,15 @@ import glnk.client.GlnkStreamFormat;
  */
 
 public class VideoDecoder implements Runnable {
-    private static final String TAG = RawH264Activity.TAG;
+    private static final String TAG = DecodeH264Activity.TAG;
     private static final boolean DEBUG = true;
 
     private static final String VIDEO_AVC_MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-    private LangTaoCodecRenderer mRenderer;
+    private LangTaoDecoder mRenderer;
     private MediaCodec.BufferInfo mVideoBufferInfo;
     private MediaCodec videoDecoder;
 
-    public VideoDecoder(LangTaoCodecRenderer renderer) {
+    public VideoDecoder(LangTaoDecoder renderer) {
         mRenderer = renderer;
         mVideoBufferInfo = new MediaCodec.BufferInfo();
         mIsStopRequested = false;

@@ -10,7 +10,7 @@ import android.widget.Toast;
 
 import com.langtao.PermissionUtils;
 import com.langtao.device.SDKinitUtil;
-import com.langtao.reborn.h264.RawH264Activity;
+import com.langtao.reborn.h264.DecodeH264Activity;
 import com.langtao.reborn.pack180.LangTao180Activity;
 import com.langtao.reborn.pack360.LangTao360Activity;
 import com.langtao.reborn.pack720.LangTao720Activity;
@@ -31,7 +31,9 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_720).setOnClickListener(this);
         findViewById(R.id.btn_360).setOnClickListener(this);
         findViewById(R.id.btn_180).setOnClickListener(this);
-        findViewById(R.id.btn_h264).setOnClickListener(this);
+        findViewById(R.id.btn_decode_h264).setOnClickListener(this);
+
+        findViewById(R.id.btn_encode_h264).setOnClickListener(this);
 
         findViewById(R.id.btn_test_mp).setOnClickListener(this);
 
@@ -88,8 +90,11 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_180:
                 startActivity(new Intent(HomeActivity.this, LangTao180Activity.class));
                 break;
-            case R.id.btn_h264:
-                startActivity(new Intent(HomeActivity.this, RawH264Activity.class));
+            case R.id.btn_decode_h264:
+                startActivity(new Intent(HomeActivity.this, DecodeH264Activity.class));
+                break;
+            case R.id.btn_encode_h264:
+                //startActivity(new Intent(HomeActivity.this, RawH264Activity.class));
                 break;
             case R.id.btn_test_mp:
                 startActivity(new Intent(HomeActivity.this, TestMultiProcessActivity.class));

@@ -17,7 +17,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.langtao.codec.LangTaoCodecRenderer;
 import com.langtao.device.DevCapability;
 import com.langtao.device.DeviceStatusManager;
 import com.langtao.reborn.R;
@@ -32,7 +31,7 @@ import glnk.client.GlnkClient;
  * Created by zzr on 2017/12/21.
  */
 
-public class RawH264Activity extends Activity implements TextureView.SurfaceTextureListener {
+public class DecodeH264Activity extends Activity implements TextureView.SurfaceTextureListener {
     public static final String TAG = "RawH264Activity";
     private TextView logView;
     // int StreamType = 0;
@@ -61,7 +60,7 @@ public class RawH264Activity extends Activity implements TextureView.SurfaceText
         filter.addAction(DeviceStatusManager.DSM_ON_DEV_FUN_INFO_CALL);
         LocalBroadcastManager.getInstance(this).registerReceiver(deviceStatusReceiver,filter);
 
-        handler = new H264Handler(RawH264Activity.this);
+        handler = new H264Handler(DecodeH264Activity.this);
 
         TextureView live_stream_view = (TextureView) findViewById(R.id.live_stream_view);
         live_stream_view.setSurfaceTextureListener(this);
@@ -107,12 +106,12 @@ public class RawH264Activity extends Activity implements TextureView.SurfaceText
 
 
 
-    private LangTaoCodecRenderer mRenderer;
+    private LangTaoDecoder mRenderer;
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture st, int width, int height) {
         Log.d(TAG, "onSurfaceTextureAvailable : " + st );
-        mRenderer = new LangTaoCodecRenderer(new Surface(st));
+        mRenderer = new LangTaoDecoder(new Surface(st));
     }
 
     @Override

@@ -112,4 +112,9 @@ public class Glnk180DataSourceListenerImpl implements GlnkDataSourceListener {
     public void onAppVideoFrameRate(int i) {
 
     }
+
+    @Override
+    public void onJsonDataRsp(byte[] bytes) {
+
+    }
 }
