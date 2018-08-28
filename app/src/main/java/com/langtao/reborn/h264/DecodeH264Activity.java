@@ -32,7 +32,7 @@ import glnk.client.GlnkClient;
  */
 
 public class DecodeH264Activity extends Activity implements TextureView.SurfaceTextureListener {
-    public static final String TAG = "RawH264Activity";
+    public static final String TAG = "DecodeH264Activity";
     private TextView logView;
     // int StreamType = 0;
     // if(录像文件 != null || 录像时间 != null){

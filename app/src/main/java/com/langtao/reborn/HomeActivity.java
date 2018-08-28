@@ -94,7 +94,6 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(new Intent(HomeActivity.this, DecodeH264Activity.class));
                 break;
             case R.id.btn_encode_h264:
-                //startActivity(new Intent(HomeActivity.this, RawH264Activity.class));
                 break;
             case R.id.btn_test_mp:
                 startActivity(new Intent(HomeActivity.this, TestMultiProcessActivity.class));
