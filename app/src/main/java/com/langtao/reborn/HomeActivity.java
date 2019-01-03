@@ -32,10 +32,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_360).setOnClickListener(this);
         findViewById(R.id.btn_180).setOnClickListener(this);
         findViewById(R.id.btn_decode_h264).setOnClickListener(this);
-
         findViewById(R.id.btn_encode_h264).setOnClickListener(this);
-
-        findViewById(R.id.btn_test_mp).setOnClickListener(this);
 
         PermissionUtils.requestMultiPermissions(this, mPermissionGrant);
     }
@@ -94,9 +91,6 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(new Intent(HomeActivity.this, DecodeH264Activity.class));
                 break;
             case R.id.btn_encode_h264:
-                break;
-            case R.id.btn_test_mp:
-                startActivity(new Intent(HomeActivity.this, TestMultiProcessActivity.class));
                 break;
         }
     }

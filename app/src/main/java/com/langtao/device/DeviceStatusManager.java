@@ -131,6 +131,16 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
 
     }
 
+    @Override
+    public void onDevVersion(String s, String s1) {
+
+    }
+
+    @Override
+    public void onDevLbsSvrTimeStamp(String s, int i) {
+
+    }
+
 
     public class DeviceStatusObject{
         int devStatus;

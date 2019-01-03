@@ -182,7 +182,7 @@ public class LangTao720Activity extends Activity {
         Log.w(TAG, TAG+" onPause");
         if(gl_view!=null) gl_view.onPause();
         //黄守华 说 放后台的时候，不需要立即停止，可以延时时间才关闭。
-        handler.sendEmptyMessageDelayed(handler.CLOSE_CONNECT, 10000);
+        //handler.sendEmptyMessageDelayed(handler.CLOSE_CONNECT, 10000);
     }
 
     @Override
@@ -192,6 +192,9 @@ public class LangTao720Activity extends Activity {
         disconnectDevice();
         close_connect();
 
+        if( mLT720RenderMgr!=null ){
+            mLT720RenderMgr.clearBuffer();
+        }
         LocalBroadcastManager.getInstance(this).unregisterReceiver(deviceStatusReceiver);
     }
 
@@ -672,7 +675,7 @@ public class LangTao720Activity extends Activity {
         ((AViewRenderer) renderer).setValidateYUVCallback(new AViewRenderer.ValidateYUVCallback() {
             @Override
             public void yuv_Callback(int width, int height, byte[] byYdata, int nYLen, byte[] byUdata, int nULen, byte[] byVdata, int nVLen) {
-                //Log.d(TAG, "Note: yuv_Callback !!! ");
+                Log.d(TAG, "Note: yuv_Callback !!! ");
                 if( mLT720RenderMgr != null ){
                     //Log.i(TAG, "mLT720RenderMgr  add_buffer !!!");
                     mLT720RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
@@ -703,14 +706,11 @@ public class LangTao720Activity extends Activity {
     }
 
     public void close_connect() {
-        if(player!=null){
+        if( player!=null ){
             player.stop();
             //里面已经会把source也stop
             player.release();
             player = null;
-        }
-        if( mLT720RenderMgr!=null ){
-            mLT720RenderMgr.clearBuffer();
         }
     }
 

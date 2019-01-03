@@ -50,10 +50,6 @@
                   android:screenOrientation="portrait"/>
         <activity android:name="com.langtao.reborn.h264.DecodeH264Activity"
                   android:screenOrientation="portrait"/>
-
-        <activity android:name="com.langtao.reborn.TestMultiProcessActivity"
-                  android:screenOrientation="portrait"
-                  android:process=":remote"/>
     </application>
 
 </manifest>
