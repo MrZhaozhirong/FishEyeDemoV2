@@ -125,12 +125,12 @@ public class PanoramaNewBall {
         if(this.isInitialized && this.isBootAnimation) {
             this.updateBallControlMode();
         }
-        MatrixHelper.perspectiveM(this.mProjectionMatrix,
-                currentOverture, ratio, 0.01f, 1000f);
-        Matrix.setLookAtM(this.mViewMatrix,0,
-                currentEye.cx,  currentEye.cy,  currentEye.cz,
-                currentEye.tx,  currentEye.ty,  currentEye.tz,
-                currentEye.upx, currentEye.upy, currentEye.upz);
+        //MatrixHelper.perspectiveM(this.mProjectionMatrix,
+        //        currentOverture, ratio, 0.01f, 1000f);
+        //Matrix.setLookAtM(this.mViewMatrix,0,
+        //        currentEye.cx,  currentEye.cy,  currentEye.cz,
+        //        currentEye.tx,  currentEye.ty,  currentEye.tz,
+        //        currentEye.upx, currentEye.upy, currentEye.upz);
         this.updateBallMatrix();
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
@@ -272,11 +272,6 @@ public class PanoramaNewBall {
             currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
             currentEye.copyTo(targetEye);
         }
-        // 初始化
-        currentOverture = 35f;// ASTEROID_MIN_OVERTURE;
-        currentEye.setCameraVector(0, 0, -0.65f);
-        currentEye.setTargetViewVector(0f, 0f, 0.0f);
-        currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
     }
 
     public int nextControlMode() {
@@ -507,15 +502,15 @@ public class PanoramaNewBall {
                 }
             }
 
-            Log.w(TAG, "targetControlMode : "+targetControlMode);
-            Log.w(TAG, "currentControlMode : "+currentControlMode);
-            Log.w(TAG, "mfingerRotationY : "+mfingerRotationY);
-            Log.w(TAG, "mfingerRotationX : "+mfingerRotationX);
-            Log.w(TAG, "currentOverture : "+currentOverture);
-            Log.w(TAG, "current mViewMatrix: " + "\n" +
-                    currentEye.cx + " " +  currentEye.cy + " " +  currentEye.cz + "\n" +
-                    currentEye.tx + " " +  currentEye.ty + " " +  currentEye.tz + "\n" +
-                    currentEye.upx + " " + currentEye.upy + " " + currentEye.upz + "\n");
+            //Log.w(TAG, "targetControlMode : "+targetControlMode);
+            //Log.w(TAG, "currentControlMode : "+currentControlMode);
+            //Log.w(TAG, "mfingerRotationY : "+mfingerRotationY);
+            //Log.w(TAG, "mfingerRotationX : "+mfingerRotationX);
+            //Log.w(TAG, "currentOverture : "+currentOverture);
+            //Log.w(TAG, "current mViewMatrix: " + "\n" +
+            //        currentEye.cx + " " +  currentEye.cy + " " +  currentEye.cz + "\n" +
+            //        currentEye.tx + " " +  currentEye.ty + " " +  currentEye.tz + "\n" +
+            //        currentEye.upx + " " + currentEye.upy + " " + currentEye.upz + "\n");
             Log.w(TAG, "=========================  " + "\n");
 
             //矩阵生效
@@ -548,9 +543,9 @@ public class PanoramaNewBall {
     }
 
     private float getFineRotation(float value) {
-        if(value>=270.0f || value<=90.0f)
+        if(value>270.0f || value<=90.0f)
             return 90.0f;
-        if(value>=90.0f && value<=270.0f)
+        if(value>90.0f && value<=270.0f)
             return 270.0f;
         return value;
     }
@@ -601,7 +596,13 @@ public class PanoramaNewBall {
         Matrix.setIdentityM(this.mModelMatrix, 0);
         Matrix.setIdentityM(this.mMatrixFingerRotationX, 0);
         Matrix.setIdentityM(this.mMatrixFingerRotationY, 0);
-        if(this.mfingerRotationY > 360f || this.mfingerRotationY < -360f){
+        //if(this.mfingerRotationY > 360f || this.mfingerRotationY < -360f){
+        //    this.mfingerRotationY = this.mfingerRotationY % 360f;
+        //}
+        if(this.mfingerRotationY < 0) {
+            this.mfingerRotationY = this.mfingerRotationY % 360.0f + 360.0f; // 使他变成正数
+        }
+        if(this.mfingerRotationY > 360f ){
             this.mfingerRotationY = this.mfingerRotationY % 360f;
         }
         Matrix.rotateM(this.mMatrixFingerRotationY, 0, this.mfingerRotationY, 0, 1, 0);
@@ -640,16 +641,18 @@ public class PanoramaNewBall {
         this.mLastX = 0;
         this.mLastY = 0;
         operating = false;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    handleGestureInertia(x,y, xVelocity, yVelocity);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        if(!updateingBallControlMode) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        handleGestureInertia(x,y, xVelocity, yVelocity);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     private void handleGestureInertia(float upX, float upY, float xVelocity, float yVelocity) throws InterruptedException {
@@ -765,7 +768,7 @@ public class PanoramaNewBall {
         this.mfingerRotationY += offsetX/8 ;
 
         updateBallBoundary();
-        if(false){
+        if(true){
             Log.w(TAG,"ball.mfingerRotationY : "+this.mfingerRotationY);
             Log.w(TAG,"ball.mfingerRotationX : "+this.mfingerRotationX);
         }
