@@ -23,7 +23,7 @@
                 style="?android:attr/textAppearance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="v704f9c766"
+                android:text="v704f7d310"
                 android:maxLines="1"/>
             <Space
                 android:layout_width="2dp"

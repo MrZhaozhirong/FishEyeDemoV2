@@ -42,7 +42,7 @@
 
         <activity android:name="com.langtao.reborn.pack720.LangTao720Activity"
                   android:configChanges="orientation|keyboardHidden|screenSize"
-                  android:screenOrientation="portrait"/>
+                  />
         <activity android:name="com.langtao.reborn.pack360.LangTao360Activity"
                   android:configChanges="orientation|keyboardHidden|screenSize"
                   android:screenOrientation="portrait"/>

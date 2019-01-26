@@ -122,6 +122,11 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
     }
 
     @Override
+    public void onDevStVersion(String s, int i) {
+
+    }
+
+    @Override
     public void onStAuthResult(String s) {
 
     }

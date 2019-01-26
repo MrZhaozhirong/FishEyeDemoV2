@@ -675,7 +675,7 @@ public class LangTao720Activity extends Activity {
         ((AViewRenderer) renderer).setValidateYUVCallback(new AViewRenderer.ValidateYUVCallback() {
             @Override
             public void yuv_Callback(int width, int height, byte[] byYdata, int nYLen, byte[] byUdata, int nULen, byte[] byVdata, int nVLen) {
-                Log.d(TAG, "Note: yuv_Callback !!! ");
+                //Log.d(TAG, "Note: yuv_Callback !!! ");
                 if( mLT720RenderMgr != null ){
                     //Log.i(TAG, "mLT720RenderMgr  add_buffer !!!");
                     mLT720RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
