@@ -52,11 +52,16 @@ public class PanoTemplateBall {
     private int m_WeightTextureID = 0;
     private boolean m_templateIsOK = false;
     private int[] _yuvTextureIDs;
+    private int render_mode;
 
     public PanoTemplateBall(int render_mode){
+        this.render_mode = render_mode;
         resetMatrixStatus();
-        initCameraEye(render_mode);
-        mfingerRotationX = -70f;    // ->0
+
+        if(currentEye==null)
+            currentEye = new CameraViewport();
+        if(targetEye==null)
+            targetEye = new CameraViewport();
     }
 
 
@@ -280,9 +285,10 @@ public class PanoTemplateBall {
     private int initFrameWidth;
     private int initFrameHeight;
     public volatile boolean isInitialized = false;
-    public volatile boolean isBootAnimation = false;
+    private volatile boolean isAnimation = false;
     // 模板加密了
-    public void onSurfaceCreated(String secretGIDStr, String templateFileName) {
+    public void onSurfaceCreated(String secretGIDStr, String templateFileName,
+                                 boolean isStartBootAnimation) {
         if( (templateFileName==null || "".equalsIgnoreCase(templateFileName) )
             &&
             (secretGIDStr==null || "".equalsIgnoreCase(secretGIDStr) )
@@ -297,7 +303,17 @@ public class PanoTemplateBall {
                 //initTexture(frame);
                 setAttributeStatus();
                 this.isInitialized = true;
-                new bootAnimationWaitThread().start();
+
+                if( isStartBootAnimation) {
+                    initCameraEye(render_mode);
+                    mfingerRotationX = -70f;    // ->0
+                    updatingBallControlMode=true;
+                    new bootAnimationWaitThread().start();
+                } else {
+                    setRenderMode(render_mode);
+                    updatingBallControlMode=false;
+                    onSurfaceChanged(mSurfaceWidth, mSurfaceHeight);
+                }
             }
         }
     }
@@ -438,7 +454,7 @@ public class PanoTemplateBall {
     }
 
     public void onDrawFrame(YUVFrame frame) {
-        if(this.isInitialized && this.isBootAnimation) {
+        if(this.isInitialized && this.isAnimation) {
             this.updateBallControlMode();
             //不能放在frame！=null 因为buffer==null会造成状态切换动画不流畅
         }
@@ -523,6 +539,7 @@ public class PanoTemplateBall {
         if(updatingBallControlMode)
             return targetControlMode;
         this.gestureInertia_isStop_sync = true;
+        this.isAnimation = true;
         // 把惯性线程停掉
         if(currentControlMode == LTRenderMode.RENDER_MODE_CRYSTAL){
             targetOverture = ASTEROID_MIN_OVERTURE;
@@ -1143,13 +1160,12 @@ public class PanoTemplateBall {
 
     // 初始化开机画面等待线程
     private class bootAnimationWaitThread extends Thread {
-
         @Override
         public void run() {
             super.run();
             try {
                 Thread.sleep(1111);
-                isBootAnimation = true;
+                isAnimation = true;
                 //Thread.sleep(5000);
                 //isNeedAutoScroll = true;
             }catch (Exception e){
@@ -1197,8 +1213,68 @@ public class PanoTemplateBall {
             currentEye.horizontalRotation(180f+xAngle).verticalRotation(-yAngle-90f);
     }
 
+
+
+
     public void setRenderMode(int renderMode) {
-        initCameraEye(renderMode);
+        if(currentEye==null)
+            currentEye = new CameraViewport();
+        if(targetEye==null)
+            targetEye = new CameraViewport();
+
+        if(renderMode != LTRenderMode.RENDER_MODE_VR){
+            if(renderMode == LTRenderMode.RENDER_MODE_CRYSTAL){
+                // 水晶球->鱼眼
+                currentOverture = CRYSTAL_OVERTURE;
+                currentEye.setCameraVector(0, 0, -1.9f);
+                currentEye.setTargetViewVector(0f, 0f, 0.0f);
+                currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
+                currentControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+                mfingerRotationX = 0f;
+                targetOverture = ASTEROID_MIN_OVERTURE;
+                targetEye.setCameraVector(0, 0, -1.0f);
+                targetEye.setTargetViewVector(0f, 0f, 0.0f);
+                targetEye.setCameraUpVector(0f, 1.0f, 0.0f);
+                targetControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
+            }
+
+            if(renderMode == LTRenderMode.RENDER_MODE_FISHEYE){
+                // 鱼眼->小行星
+                currentOverture = ASTEROID_MIN_OVERTURE;
+                currentEye.setCameraVector(0, 0, -1.0f);
+                currentEye.setTargetViewVector(0f, 0f, 0.0f);
+                currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
+                currentControlMode = LTRenderMode.RENDER_MODE_FISHEYE;
+                mfingerRotationX = 0f;
+                targetOverture = ASTEROID_MAX_OVERTURE;
+                targetEye.setCameraVector(0, 0, -1.0f);
+                targetEye.setTargetViewVector(0f, 0f, 0.0f);
+                targetEye.setCameraUpVector(0f, 1.0f, 0.0f);
+                targetControlMode = LTRenderMode.RENDER_MODE_PLANET;
+            }
+
+            if(renderMode == LTRenderMode.RENDER_MODE_PLANET){
+                // 小行星->全景球
+                currentOverture = ASTEROID_MAX_OVERTURE;
+                currentEye.setCameraVector(0, 0, -1.0f);
+                currentEye.setTargetViewVector(0f, 0f, 0.0f);
+                currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
+                currentControlMode = LTRenderMode.RENDER_MODE_PLANET;
+                mfingerRotationX = -70f;
+                targetOverture = CRYSTAL_OVERTURE;
+                targetEye.setCameraVector(0, 0, -1.9f);
+                targetEye.setTargetViewVector(0f, 0f, 0.0f);
+                targetEye.setCameraUpVector(0f, 1.0f, 0.0f);
+                targetControlMode = LTRenderMode.RENDER_MODE_CRYSTAL;
+            }
+        } else {
+            currentControlMode = targetControlMode = LTRenderMode.RENDER_MODE_VR;
+            currentOverture = targetOverture = VR_OVERTURE;
+            currentEye.setCameraVector(0, 0, 0.0f);
+            currentEye.setTargetViewVector(0f, 0f, 1.0f);
+            currentEye.setCameraUpVector(0f, 1.0f, 0.0f);
+            currentEye.copyTo(targetEye);
+        }
     }
 
 

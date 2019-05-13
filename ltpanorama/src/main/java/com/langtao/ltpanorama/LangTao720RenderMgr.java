@@ -55,8 +55,6 @@ public class LangTao720RenderMgr extends LTRenderManager {
         }
     }
 
-
-
     // 设置请求生成 2:1全景图 回调
     private volatile boolean requestScreenShot = false;
     public void getPanoramaPicture(final PanoTemplateRectangleFBO.ScreenShotReadyCallback callback){
@@ -84,6 +82,14 @@ public class LangTao720RenderMgr extends LTRenderManager {
         if(LT_PANORAMA_PIC.equalsIgnoreCase(type) ||
                 LT_PANORAMA_VIDEO.equalsIgnoreCase(type) )
             PIC_OR_VIDEO = type;
+    }
+
+
+    // 2019.05.13
+    // 是否打开启动动画
+    private boolean isStartBootAnimation;
+    public void startBootAnimation(boolean isStart) {
+        isStartBootAnimation = isStart;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +126,8 @@ public class LangTao720RenderMgr extends LTRenderManager {
                     if(!panoTmBall.isInitialized && buffer!=null) {
                         panoTmBall.onSurfaceCreated(
                                 panoTemplateConfigFile_gid,
-                                panoTemplateConfigFileName_AbsolutePath);
+                                panoTemplateConfigFileName_AbsolutePath,
+                                isStartBootAnimation);
                     }
                     panoTmBall.onDrawFrame(buffer);
                     // 请求生成 2:1全景图
