@@ -37,6 +37,7 @@ import com.langtao.device.GlnkApplication;
 import com.langtao.device.SDKinitUtil;
 import com.langtao.ltpanorama.LTRenderManager;
 import com.langtao.ltpanorama.LangTao720RenderMgr;
+import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.ltpanorama.shape.PanoTemplateRectangleFBO;
 import com.langtao.protocol.Command;
 import com.langtao.protocol.OWSP_StreamType;
@@ -58,6 +59,8 @@ import glnk.media.GlnkDataSource;
 import glnk.media.GlnkPlayer;
 import glnk.media.VideoRenderer;
 
+import static android.R.attr.streamType;
+
 /**
  * Created by zzr on 2017/12/6.
  */
@@ -65,9 +68,6 @@ public class LangTao720Activity extends Activity {
     public static final String TAG = "LangTao720Activity";
     private TextView logView;
     private LT720Handler handler;
-    //nStreamType实时流，码流类型， 0-主码流； 1-次码流
-    //dataType流数据类型, 0-视频流, 1-音频流, 2-音视频流
-    private int channelNo=0, streamType=0, dataType=2;
 
     private class DeviceStatusReceiver extends BroadcastReceiver {
 
@@ -113,6 +113,8 @@ public class LangTao720Activity extends Activity {
 
         handler = new LT720Handler(LangTao720Activity.this);
         mLT720RenderMgr = new LangTao720RenderMgr();
+        ((LangTao720RenderMgr)mLT720RenderMgr).startBootAnimation(false);
+        ((LangTao720RenderMgr)mLT720RenderMgr).setRenderMode(LTRenderMode.RENDER_MODE_FISHEYE);
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(DeviceStatusManager.DSM_ON_CHANGED_CALL);
@@ -243,13 +245,18 @@ public class LangTao720Activity extends Activity {
         }
     }
 
+    private int mStreamType=0;
+
     public void clickConnect(@SuppressLint("USELESS") View view) {
         EditText gid = (EditText) findViewById(R.id.gid);
         EditText account = (EditText) findViewById(R.id.account);
         EditText password = (EditText) findViewById(R.id.password);
+        int channelNo = 0;
+        int dataType = 2;
+        mStreamType = 0;
         open_connect(gid.getText().toString(),
                 account.getText().toString(), password.getText().toString(),
-                channelNo, streamType, dataType);
+                channelNo, mStreamType, dataType);
         if(mLT720RenderMgr != null) {
             //要先下载配置文件。
             if(mLT720RenderMgr instanceof LangTao720RenderMgr){
@@ -260,11 +267,11 @@ public class LangTao720Activity extends Activity {
     }
 
     public void downloadPanoramaConfig(@SuppressLint("USELESS") View view) {
-        connectToDevice();
+        connectToDevice(0,3,0);
     }
 
     public void clickNextMode(@SuppressLint("USELESS") View view) {
-        if(mLT720RenderMgr!=null){
+        if(mLT720RenderMgr!=null) {
             if(mLT720RenderMgr instanceof LangTao720RenderMgr)
                 ((LangTao720RenderMgr)mLT720RenderMgr).nextModelShape();
         }
@@ -601,13 +608,15 @@ public class LangTao720Activity extends Activity {
     ///////////////////////下载全景模板配置文件///////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private GlnkChannel vodChannel;
+    private volatile boolean keepRunn;
     private GlnkVodSearchDataSourceImpl vodSource;
-    private void connectToDevice() {
+    private void connectToDevice(int channelNo, int streamType, int dataType) {
         EditText gid = (EditText) findViewById(R.id.gid);
         EditText account = (EditText) findViewById(R.id.account);
         EditText password = (EditText) findViewById(R.id.password);
         //开始下一次搜索之前，得关闭了上一次搜索,原因是设备可能不同
         if (vodChannel != null) {
+            keepRunn = false;
             vodChannel.stop();
             vodChannel.release();
         }
@@ -617,7 +626,25 @@ public class LangTao720Activity extends Activity {
         vodChannel.setMetaData(
                 gid.getText().toString(), account.getText().toString(), password.getText().toString(),
                 channelNo, streamType, dataType);
+        vodChannel.setReconnectable(true);
+        vodChannel.keepliveReq();
         vodChannel.start();
+
+        keepRunn = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(keepRunn)
+                {
+                    try {
+                        Thread.sleep(1000L);
+                        if(vodChannel!=null)vodChannel.keepliveReq();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     public void PanoFileDownload(String fileName) {
@@ -627,6 +654,7 @@ public class LangTao720Activity extends Activity {
     }
     public void disconnectDevice() {
         if (vodChannel != null) {
+            keepRunn = false;
             vodChannel.stop();
             vodChannel.release();
             vodChannel = null;
@@ -723,10 +751,10 @@ public class LangTao720Activity extends Activity {
             return ;
         }
         _TLV_V_VideoModeRequest switchStream = new _TLV_V_VideoModeRequest();
-        streamType = streamType == OWSP_StreamType.OWSP_VIEWMODE_HD
+        mStreamType = mStreamType == OWSP_StreamType.OWSP_VIEWMODE_HD
                 ? OWSP_StreamType.OWSP_VIEWMODE_SD
                 : OWSP_StreamType.OWSP_VIEWMODE_HD;
-        switchStream.mode = streamType;
+        switchStream.mode = mStreamType;
 
         int res = source.getGlnkChannel()
                 .sendData(Command.TLV_T_VIDEOMODE_REQ, switchStream.serialize());

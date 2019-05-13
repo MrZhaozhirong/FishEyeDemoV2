@@ -84,6 +84,11 @@ public class Glnk180DataSourceListenerImpl implements GlnkDataSourceListener {
     }
 
     @Override
+    public void onRemoteFileCtrlResp2(int i, int i1) {
+
+    }
+
+    @Override
     public void onLocalFileOpenResp(int i, int i1) {
 
     }

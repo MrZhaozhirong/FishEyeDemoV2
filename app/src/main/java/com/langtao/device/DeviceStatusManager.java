@@ -146,6 +146,11 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
 
     }
 
+    @Override
+    public void onDevDoorDellWebDomain(String s, String s1, int i) {
+
+    }
+
 
     public class DeviceStatusObject{
         int devStatus;
