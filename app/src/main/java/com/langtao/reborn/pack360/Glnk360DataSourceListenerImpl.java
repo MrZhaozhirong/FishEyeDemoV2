@@ -44,6 +44,11 @@ public class Glnk360DataSourceListenerImpl implements GlnkDataSourceListener {
     }
 
     @Override
+    public void onGetFwdAddr(int i, String s, int i1) {
+
+    }
+
+    @Override
     public void onConnected(int i, String s, int i1) {
         Log.d(TAG, "DataSource  onConnected ... "+s+"\n");
     }

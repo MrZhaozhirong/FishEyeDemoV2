@@ -51,6 +51,11 @@ public class GlnkDataSourceListenerImpl implements GlnkDataSourceListener {
     }
 
     @Override
+    public void onGetFwdAddr(int i, String s, int i1) {
+
+    }
+
+    @Override
     public void onConnected(int i, String s, int i1) {
         if(mHandler!=null) {
             Message message = mHandler.obtainMessage(mHandler.LOG_MSG);

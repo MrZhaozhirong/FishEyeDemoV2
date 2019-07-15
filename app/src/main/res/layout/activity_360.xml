@@ -15,7 +15,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="80416597"
+            android:text="zz019dbf24"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -37,25 +37,30 @@
             android:layout_height="wrap_content"
             android:text="123456"
             android:maxLines="1"/>
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/add"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="add"
             android:onClick="clickAddGid" />
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
-
         <Button
             android:id="@+id/download_config_file"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="连接"
             android:onClick="clickConnect" />
+        <Button
+            android:id="@+id/left_cruise"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="左转"
+            android:onClick="clickLeftCruise" />
+        <Button
+            android:id="@+id/right_cruise"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="右转"
+            android:onClick="clickRightCruise"/>
     </LinearLayout>
 
     <LinearLayout
@@ -65,65 +70,41 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <Button
-            android:id="@+id/fish_eye_360"
+            android:id="@+id/eye_360_up"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
-            android:text="360"
-            android:onClick="clickFishEye360" />
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
+            android:text="吸顶"
+            android:onClick="clickFishEye360Up" />
+        <Button
+            android:id="@+id/eye_360_down"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="座装"
+            android:onClick="clickFishEyeDesktop" />
         <Button
             android:id="@+id/four_fish_eye_360"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="四屏"
             android:onClick="clickFour360"/>
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/two_rectangle"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="矩形"
             android:onClick="clickTwoRectangle"/>
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/cylinder"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="圆柱"
             android:onClick="clickCylinder"/>
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/mode_180"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="180"
             android:onClick="clickMode180"/>
-        <Space
-            android:layout_width="1dp"
-            android:layout_height="match_parent"/>
-        <Button
-            android:id="@+id/left_cruise"
-            android:layout_width="55dp"
-            android:layout_height="wrap_content"
-            android:text="左转"
-            android:onClick="clickLeftCruise" />
-        <Space
-            android:layout_width="1dp"
-            android:layout_height="match_parent"/>
-        <Button
-            android:id="@+id/right_cruise"
-            android:layout_width="55dp"
-            android:layout_height="wrap_content"
-            android:text="右转"
-            android:onClick="clickRightCruise"/>
     </LinearLayout>
 
     <LinearLayout
@@ -161,7 +142,7 @@
     <RelativeLayout
         android:layout_below="@id/third"
         android:id="@+id/gl_view_container"
-        android:layout_width="400dp"
-        android:layout_height="400dp"/>
+        android:layout_width="350dp"
+        android:layout_height="350dp"/>
 
 </RelativeLayout>

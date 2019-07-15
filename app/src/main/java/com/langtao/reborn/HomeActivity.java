@@ -100,6 +100,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         Log.w("HomeActivity", "onResume");
+        SDKinitUtil.initGlnkSDK();
     }
 
     @Override

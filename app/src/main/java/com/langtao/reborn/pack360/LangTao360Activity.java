@@ -2,6 +2,8 @@ package com.langtao.reborn.pack360;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -64,8 +66,9 @@ public class LangTao360Activity extends Activity {
         if( SDKinitUtil.checkGLEnvironment() ){
             if(mLT360RenderMgr == null)
                 mLT360RenderMgr = new LangTao360RenderMgr();
-            mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_360);
-            mLT360RenderMgr.setAutoCruise(true);
+            //mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_360);
+            //mLT360RenderMgr.setAutoCruise(true);
+
             gl_view = new GLSurfaceView(LangTao360Activity.this);
             gl_view.setEGLContextClientVersion(2);
             gl_view.setRenderer(mLT360RenderMgr);
@@ -88,7 +91,7 @@ public class LangTao360Activity extends Activity {
     protected void onResume() {
         super.onResume();
         Log.w(TAG, TAG+" onResume");
-        if(gl_view!=null){
+        if( gl_view!=null){
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -113,6 +116,16 @@ public class LangTao360Activity extends Activity {
         if(gl_view!=null) gl_view.onPause();
 
         close_connect();
+
+        if(mLT360RenderMgr!=null) {
+            float[] currentRotation = mLT360RenderMgr.getRotationPoint();
+            if(currentRotation==null) return;
+            SharedPreferences prefs = getSharedPreferences("FISH_EYE", Context.MODE_PRIVATE);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putFloat("rotationX", currentRotation[0]);
+            edit.putFloat("rotationY", currentRotation[1]);
+            edit.apply();
+        }
     }
 
     public void clickAddGid(@SuppressLint("USELESS") View view) {
@@ -129,7 +142,19 @@ public class LangTao360Activity extends Activity {
                 channelNo, streamType, dataType);
     }
 
-    public void clickFishEye360(@SuppressLint("USELESS") View view) {
+
+    public void clickFishEyeDesktop(@SuppressLint("USELESS") View view) {
+        if(mLT360RenderMgr!=null){
+            SharedPreferences prefs = getSharedPreferences("FISH_EYE", Context.MODE_PRIVATE);
+            float rotationX = prefs.getFloat("rotationX", 0.0f);
+            float rotationY = prefs.getFloat("rotationY", 0.0f);
+            float[] point = {rotationX, rotationY};
+            mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_DESKTOP);
+            // 先设置 LTRenderMode.RENDER_MODE_DESKTOP 再设置Rotation
+            mLT360RenderMgr.setRotationPoint(point);
+        }
+    }
+    public void clickFishEye360Up(@SuppressLint("USELESS") View view) {
         if(mLT360RenderMgr!=null){
             mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_360);
         }

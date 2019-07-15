@@ -20,6 +20,7 @@ public class VideoDecoder implements Runnable {
     private static final boolean DEBUG = true;
 
     private static final String VIDEO_AVC_MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
+    private static final String VIDEO_HEVC_MIME_TYPE = "video/hevc";    // H.264 Advanced Video Coding
     private LangTaoDecoder mRenderer;
     private MediaCodec.BufferInfo mVideoBufferInfo;
     private MediaCodec videoDecoder;
@@ -41,8 +42,6 @@ public class VideoDecoder implements Runnable {
         int mVideoWidth = liveStreamFmt.getVideoWidth();
         int mVideoHeight = liveStreamFmt.getVideoHeight();
 
-        byte[] video_sps = {0, 0, 0, 1, 103, 100, 64, 41, -84, 44, -88, 10, 2, -1, -107};
-
         byte[] sps0 = {0, 0, 0, 1, 103, 100, 64, 41, -84, 44, -88, 5, 0, 91, -112};
         byte[] pps0 = {0, 0, 0, 1, 104, -18, 56, -128};
 
@@ -55,14 +54,14 @@ public class VideoDecoder implements Runnable {
         byte[] csd0 = { 0, 0, 0, 1, 103, 66, -128, 30, -38, 5, -63, 71, -105, -128, 109, 10, 19, 80 };
         byte[] csd1 = { 0, 0, 0, 1, 104, -50, 6, -30 };
 
-        MediaFormat videoFormat = MediaFormat.createVideoFormat(VIDEO_AVC_MIME_TYPE, mVideoWidth, mVideoHeight);
+        MediaFormat videoFormat = MediaFormat.createVideoFormat(VIDEO_HEVC_MIME_TYPE, mVideoWidth, mVideoHeight);
         //videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        videoFormat.setByteBuffer("csd-0", ByteBuffer.wrap(csd0));
-        videoFormat.setByteBuffer("csd-1", ByteBuffer.wrap(csd1));
+        //videoFormat.setByteBuffer("csd-0", ByteBuffer.wrap(csd0));
+        //videoFormat.setByteBuffer("csd-1", ByteBuffer.wrap(csd1));
 
         Log.w(TAG, videoFormat.toString());
         try {
-            videoDecoder = MediaCodec.createDecoderByType(VIDEO_AVC_MIME_TYPE);
+            videoDecoder = MediaCodec.createDecoderByType(VIDEO_HEVC_MIME_TYPE);
             videoDecoder.configure(videoFormat, outputSurface, null, 0);
             videoDecoder.start();
         } catch (Exception e) {
