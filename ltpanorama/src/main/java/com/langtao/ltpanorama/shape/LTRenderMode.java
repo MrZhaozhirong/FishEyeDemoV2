@@ -10,6 +10,7 @@ public class LTRenderMode {
     public static final int CRUISE_RIGHT = 1;
 
     public static final int RENDER_MODE_360 = 360;
+    public static final int RENDER_MODE_DESKTOP = 360+1;
     public static final int RENDER_MODE_FOUR_EYE = 360*4;       //1440
     public static final int RENDER_MODE_TWO_RECTANGLE = 490;    //70*70
     public static final int RENDER_MODE_CYLINDER = 360*2/3;     //540

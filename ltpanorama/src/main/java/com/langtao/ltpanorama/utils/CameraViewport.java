@@ -30,6 +30,17 @@ public class CameraViewport {
     private float current_horizontal_angle=0;
     private float current_vertical_angle=0;
 
+    public Geometry.Vector getEye() {
+        return _eye;
+    }
+
+    public Geometry.Vector getTarget() {
+        return _lookAt;
+    }
+
+    public Geometry.Vector getUp() {
+        return _up;
+    }
 
     public CameraViewport updateAllVector(){
         this.cx = _eye.x;
@@ -155,17 +166,17 @@ public class CameraViewport {
 
     @Override
     public boolean equals(Object o) {
-        CameraViewport tartgetEye = (CameraViewport) o;
+        CameraViewport targetEye = (CameraViewport) o;
         if(
-                beEqualTo(tartgetEye.cx , this.cx) &&
-                beEqualTo(tartgetEye.cy , this.cy) &&
-                beEqualTo(tartgetEye.cz , this.cz) &&
-                beEqualTo(tartgetEye.tx , this.tx) &&
-                beEqualTo(tartgetEye.ty , this.ty) &&
-                beEqualTo(tartgetEye.tz , this.tz) &&
-                beEqualTo(tartgetEye.upx , this.upx) &&
-                beEqualTo(tartgetEye.upy , this.upy) &&
-                beEqualTo(tartgetEye.upz , this.upz)
+                beEqualTo(targetEye.cx , this.cx) &&
+                beEqualTo(targetEye.cy , this.cy) &&
+                beEqualTo(targetEye.cz , this.cz) &&
+                beEqualTo(targetEye.tx , this.tx) &&
+                beEqualTo(targetEye.ty , this.ty) &&
+                beEqualTo(targetEye.tz , this.tz) &&
+                beEqualTo(targetEye.upx , this.upx) &&
+                beEqualTo(targetEye.upy , this.upy) &&
+                beEqualTo(targetEye.upz , this.upz)
         ){
             return true;
         }else{
@@ -191,5 +202,17 @@ public class CameraViewport {
         } else {
             return;
         }
+    }
+
+    public void scaleCameraByPos(Geometry.Vector pos, float present) {
+        Geometry.Vector dir = pos.descrease(_eye).normalize();
+        float dis = pos.descrease(_eye).length() * present;
+        float disCam = _lookAt.descrease(_eye).length() * present;
+        Geometry.Vector dirCam = _lookAt.descrease(_eye).normalize();
+
+        _eye    =   pos.descrease(dir.scale(dis));
+        _lookAt =   _eye.increase(dirCam.scale(disCam));
+
+        updateAllVector();
     }
 }

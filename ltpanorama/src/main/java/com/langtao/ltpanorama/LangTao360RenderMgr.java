@@ -8,6 +8,7 @@ import com.langtao.ltpanorama.component.YUVFrame;
 import com.langtao.ltpanorama.shape.Cylinder;
 import com.langtao.ltpanorama.shape.FishEye180;
 import com.langtao.ltpanorama.shape.FishEye360;
+import com.langtao.ltpanorama.shape.FishEye360Desktop;
 import com.langtao.ltpanorama.shape.FourEye360;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.ltpanorama.shape.TwoRectangle;
@@ -59,18 +60,8 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         }).start();
     }
 
-    private byte[] IntsToBytes(int[] pixels) {
-        byte[] bytes = new byte[pixels.length * 4];
-        int offset = 0;
-        for (int pixel : pixels) {
-            bytes[offset++] = (byte) (pixel & 0xff);// 最低位
-            bytes[offset++] = (byte) ((pixel >> 8) & 0xff);// 次低位
-            bytes[offset++] = (byte) ((pixel >> 16) & 0xff);// 次高位
-            bytes[offset++] = (byte) (pixel >>> 24);// 最高位,无符号右移。
-        }
-        return bytes;
-    }
 
+    private FishEye360Desktop desktop;
     private FishEye360 bowl;
     private FourEye360 fourEye;
     private TwoRectangle rectangle;
@@ -81,7 +72,9 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         Log.w(TAG, "LangTao360RenderMgr onSurfaceCreated");
+        desktop = new FishEye360Desktop();
         bowl = new FishEye360();
+
         fourEye = new FourEye360();
         rectangle = new TwoRectangle();
         cylinder = new Cylinder();
@@ -94,9 +87,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         Log.w(TAG, "LangTao360RenderMgr onSurfaceChanged");
         Log.w(TAG, "Render width X height : "+width+" x "+height);
         bowl.onSurfaceChange(width, height);
+        desktop.onSurfaceChange(width, height);
         fourEye.onSurfaceChange(width, height);
         rectangle.onSurfaceChange(width, height);
-        //1080 x 1794
+
         cylinder.onSurfaceChange(width, height);
 
         curvedPlate.onSurfaceChange(width, height);
@@ -108,6 +102,12 @@ public class LangTao360RenderMgr extends LTRenderManager   {
             if(PIC_OR_VIDEO.equalsIgnoreCase(VIDEO)) {
                 YUVFrame frame = mCircularBuffer.getFrame();
                 switch (RENDER_MODE){
+                    case LTRenderMode.RENDER_MODE_DESKTOP:{
+                        if( !desktop.isInitialized ){
+                            desktop.onSurfaceCreate(frame);
+                        }
+                        desktop.onDrawFrame(frame);
+                    }break;
                     case LTRenderMode.RENDER_MODE_180:{
                         if( !curvedPlate.isInitialized ){
                             curvedPlate.onSurfaceCreate(frame);
@@ -192,6 +192,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     @Override
     public void handleTouchUp(final float x, final float y, final float xVelocity, final float yVelocity) {
         switch (RENDER_MODE){
+            case LTRenderMode.RENDER_MODE_DESKTOP:{
+                if(desktop!=null )
+                    desktop.handleTouchUp(x, y, xVelocity, yVelocity);
+            }break;
             case LTRenderMode.RENDER_MODE_180:{
                 if(curvedPlate!=null)
                     curvedPlate.handleTouchUp(x, y, xVelocity, yVelocity);
@@ -220,6 +224,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     @Override
     public void handleTouchDown(float x, float y) {
         switch (RENDER_MODE){
+            case LTRenderMode.RENDER_MODE_DESKTOP:{
+                if(desktop!=null )
+                    desktop.handleTouchDown(x, y);
+            }break;
             case LTRenderMode.RENDER_MODE_180:{
                 if(curvedPlate!=null)
                     curvedPlate.handleTouchDown(x, y);
@@ -248,6 +256,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     @Override
     public void handleTouchMove(float x, float y) {
         switch (RENDER_MODE){
+            case LTRenderMode.RENDER_MODE_DESKTOP:{
+                if(desktop!=null )
+                    desktop.handleTouchMove(x, y);
+            }break;
             case LTRenderMode.RENDER_MODE_180:{
                 if(curvedPlate!=null)
                     curvedPlate.handleTouchMove(x, y);
@@ -273,10 +285,13 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                 break;
         }
     }
-
     @Override
     public void handleMultiTouch(float distance) {
         switch (RENDER_MODE){
+            case LTRenderMode.RENDER_MODE_DESKTOP:{
+                if(desktop!=null )
+                    desktop.handleMultiTouch(distance);
+            }break;
             case LTRenderMode.RENDER_MODE_180:{
                 if(curvedPlate!=null)
                     curvedPlate.handleMultiTouch(distance);
@@ -306,6 +321,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     @Override
     public void handleDoubleClick() {
         switch (RENDER_MODE){
+            case LTRenderMode.RENDER_MODE_DESKTOP:{
+                //if(desktop!=null )
+                //    desktop.handleDoubleClick();
+            }break;
             case LTRenderMode.RENDER_MODE_180:{
                 if(curvedPlate!=null)
                     curvedPlate.handleDoubleClick();
@@ -342,6 +361,8 @@ public class LangTao360RenderMgr extends LTRenderManager   {
      * @param autoCruise
      */
     public void setAutoCruise(boolean autoCruise){
+        if (desktop != null)
+            desktop.setAutoCruise(autoCruise);
         if (curvedPlate != null)
             curvedPlate.setAutoCruise(autoCruise);
         if (bowl != null)
@@ -355,6 +376,8 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     }
 
     public void setCruiseDirection(int direction) {
+        if (desktop != null)
+            desktop.setCruiseDirection(direction);
         if (bowl != null)
             bowl.setCruiseDirection(direction);
         if (fourEye != null)
@@ -365,4 +388,21 @@ public class LangTao360RenderMgr extends LTRenderManager   {
             rectangle.setCruiseDirection(direction);
     }
 
+
+
+    public float[] getRotationPoint() {
+        if(RENDER_MODE == LTRenderMode.RENDER_MODE_DESKTOP) {
+            if(desktop!=null ) {
+                return desktop.getRotationPoint();
+            }
+        }
+        return null;
+    }
+    public void setRotationPoint(float[] point) {
+        if(RENDER_MODE == LTRenderMode.RENDER_MODE_DESKTOP) {
+            if(desktop!=null ) {
+                desktop.setRotationPoint(point);
+            }
+        }
+    }
 }
