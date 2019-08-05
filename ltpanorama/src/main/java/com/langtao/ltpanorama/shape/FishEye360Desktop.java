@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 public class FishEye360Desktop {
 
     private static final String TAG = "OneFishEye360";
-    private final static double overture = 110;
+    private final static double overture = 90;
     //================================建模视频帧相关==============================================================
     //================================建模视频帧相关==============================================================
     private static final int BYTES_PER_FLOAT = 4;
@@ -72,23 +72,23 @@ public class FishEye360Desktop {
     private volatile boolean isNeedAutoScroll = false;
     private volatile int direction = 0;
     private volatile boolean operating = false;
-    private float UPPER_VISION_VALUE = -53.0f;
-    private float LOWER_VISION_VALUE = -8.0f;
+    private float UPPER_VISION_VALUE = -55.0f;
+    private float LOWER_VISION_VALUE = -13.0f;
 
 
     //================================操作封装==================================================================
     //================================模型操作相关==============================================================
     public FishEye360Desktop() {
         resetMatrixStatus();
-
+        mScale = 0;
         Matrix.setIdentityM(this.mProjectionMatrix, 0);
         Matrix.setIdentityM(this.mViewMatrix, 0);
         Matrix.setIdentityM(this.mModelMatrix, 0);
         Matrix.scaleM(this.mModelMatrix, 0, 1.0f, 1.0f, 1.0f);
 
         mCameraEye = new CameraViewport();
-        mCameraEye.setCameraVector(0, 0.0f, 0.12f);
-        mCameraEye.setTargetViewVector(0.0f, 0.8f, 0.8f);
+        mCameraEye.setCameraVector(0, -0.4f, 0.15f);
+        mCameraEye.setTargetViewVector(0.0f, 0.9f, 0.9f);
         mCameraEye.setCameraUpVector(0f, 0f, 1.0f);
     }
 
@@ -494,11 +494,11 @@ public class FishEye360Desktop {
         this.mLastY = y;
     }
 
-    private float mScale = 0;
+    private float mScale;
     public void handleMultiTouch(float distance) {
         float present =   distance > 0 ? 0.99f : 1.01f;
         if(distance > 0) {
-            if(mScale < 40)
+            if(mScale < 45)
                 mScale ++;
             else
                 return;
@@ -518,6 +518,43 @@ public class FishEye360Desktop {
                 mCameraEye.tx, mCameraEye.ty, mCameraEye.tz,
                 mCameraEye.upx, mCameraEye.upy, mCameraEye.upz);
     }
+
+    public float getCurrentScale() {
+        return this.mScale;
+    }
+
+    public void setScale(float scale) {
+        this.mScale = scale;
+        // 初始化 恢复之前的放大倍数
+        float present = 0.99f;
+        for(int i=0; i<scale; i++) {
+            Geometry.Vector target = mCameraEye.getTarget();
+            mCameraEye.scaleCameraByPos(target, present);
+
+            Matrix.setLookAtM(this.mViewMatrix, 0,
+                    mCameraEye.cx, mCameraEye.cy, mCameraEye.cz,
+                    mCameraEye.tx, mCameraEye.ty, mCameraEye.tz,
+                    mCameraEye.upx, mCameraEye.upy, mCameraEye.upz);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public void setAutoCruise(boolean autoCruise) {
         this.isNeedAutoScroll = autoCruise;

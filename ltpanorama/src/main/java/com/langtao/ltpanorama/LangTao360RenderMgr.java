@@ -69,10 +69,46 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     //180
     private FishEye180 curvedPlate;
 
+
+
+
+    private float[] desktop_position_point = new float[2];
+    public void setRotationPoint(float[] point) {
+        desktop_position_point[0] = point[0];
+        desktop_position_point[1] = point[1];
+        if(desktop!=null ) {
+            desktop.setRotationPoint(point);
+        }
+    }
+    public float[] getRotationPoint() {
+        if(desktop!=null ) {
+            return desktop.getRotationPoint();
+        }
+        return null;
+    }
+
+
+    private float desktop_room_scale = 0;
+    public void setCurrentScale(float scale) {
+        this.desktop_room_scale = scale;
+        if(desktop!=null ) {
+            desktop.setScale(desktop_room_scale);
+        }
+    }
+    public float getCurrentScale() {
+        if(desktop!=null ) {
+            return desktop.getCurrentScale();
+        }
+        return desktop_room_scale;
+    }
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         Log.w(TAG, "LangTao360RenderMgr onSurfaceCreated");
         desktop = new FishEye360Desktop();
+        desktop.setRotationPoint(desktop_position_point);
+        desktop.setScale(desktop_room_scale);
+
         bowl = new FishEye360();
 
         fourEye = new FourEye360();
@@ -390,19 +426,4 @@ public class LangTao360RenderMgr extends LTRenderManager   {
 
 
 
-    public float[] getRotationPoint() {
-        if(RENDER_MODE == LTRenderMode.RENDER_MODE_DESKTOP) {
-            if(desktop!=null ) {
-                return desktop.getRotationPoint();
-            }
-        }
-        return null;
-    }
-    public void setRotationPoint(float[] point) {
-        if(RENDER_MODE == LTRenderMode.RENDER_MODE_DESKTOP) {
-            if(desktop!=null ) {
-                desktop.setRotationPoint(point);
-            }
-        }
-    }
 }
