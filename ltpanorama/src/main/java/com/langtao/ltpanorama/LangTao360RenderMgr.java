@@ -181,6 +181,12 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                 if(frame!=null) frame.release();
             }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
                 switch (RENDER_MODE){
+                    case LTRenderMode.RENDER_MODE_DESKTOP:{
+                        if( !desktop.isInitialized ){
+                            desktop.onSurfaceCreate(previewPicPathName, previewPicRawData);
+                        }
+                        desktop.onDrawPreviewPic();
+                    }break;
                     case LTRenderMode.RENDER_MODE_180:{
                         if( !curvedPlate.isInitialized ){
                             curvedPlate.onSurfaceCreate(previewPicPathName, previewPicRawData);
