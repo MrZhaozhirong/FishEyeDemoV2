@@ -4,19 +4,24 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.langtao.device.GlnkApplication;
 import com.langtao.device.SDKinitUtil;
 import com.langtao.ltpanorama.LangTao360RenderMgr;
 import com.langtao.ltpanorama.component.YUVFrame;
@@ -66,7 +71,15 @@ public class LangTao360Activity extends Activity {
         if( SDKinitUtil.checkGLEnvironment() ){
             if(mLT360RenderMgr == null)
                 mLT360RenderMgr = new LangTao360RenderMgr();
-            //mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_360);
+            mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_DESKTOP);
+            SharedPreferences prefs = getSharedPreferences("FISH_EYE", Context.MODE_PRIVATE);
+            float rotationX = prefs.getFloat("rotationX", 0.0f);
+            float rotationY = prefs.getFloat("rotationY", 0.0f);
+            float[] point = {rotationX, rotationY};
+            mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_DESKTOP);
+            mLT360RenderMgr.setRotationPoint(point);
+            float desktop_scale = prefs.getFloat("desktop_scale", 0.0f);
+            mLT360RenderMgr.setCurrentScale(desktop_scale);
             //mLT360RenderMgr.setAutoCruise(true);
 
             gl_view = new GLSurfaceView(LangTao360Activity.this);
@@ -119,11 +132,13 @@ public class LangTao360Activity extends Activity {
 
         if(mLT360RenderMgr!=null) {
             float[] currentRotation = mLT360RenderMgr.getRotationPoint();
+            float currentScale = mLT360RenderMgr.getCurrentScale();
             if(currentRotation==null) return;
             SharedPreferences prefs = getSharedPreferences("FISH_EYE", Context.MODE_PRIVATE);
             SharedPreferences.Editor edit = prefs.edit();
             edit.putFloat("rotationX", currentRotation[0]);
             edit.putFloat("rotationY", currentRotation[1]);
+            edit.putFloat("desktop_scale", currentScale);
             edit.apply();
         }
     }
@@ -205,6 +220,47 @@ public class LangTao360Activity extends Activity {
         close_connect();
         if(mLT360RenderMgr!=null) {
             mLT360RenderMgr.setPreviewFishEyePicture(PanoramaScreenshot_path+File.separator+"frame.jpg");
+        }
+    }
+
+    public void clickOverScreen(@SuppressLint("USELESS") View view) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+    }
+
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(this.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            return true;
+        }else{
+            return super.onKeyDown(keyCode, event);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if(this.getResources().getConfiguration().orientation ==Configuration.ORIENTATION_LANDSCAPE) {
+            findViewById(R.id.first).setVisibility(View.GONE);
+            findViewById(R.id.second).setVisibility(View.GONE);
+            findViewById(R.id.third).setVisibility(View.GONE);
+
+            ViewGroup.LayoutParams layoutParams = gl_view_container.getLayoutParams();
+            layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            gl_view_container.setLayoutParams(layoutParams);
+        } else if(this.getResources().getConfiguration().orientation ==Configuration.ORIENTATION_PORTRAIT) {
+            findViewById(R.id.first).setVisibility(View.VISIBLE);
+            findViewById(R.id.second).setVisibility(View.VISIBLE);
+            findViewById(R.id.third).setVisibility(View.VISIBLE);
+
+            ViewGroup.LayoutParams layoutParams = gl_view_container.getLayoutParams();
+            layoutParams.width = (int) GlnkApplication.dip2px(350f);
+            layoutParams.height = (int) GlnkApplication.dip2px(350f);
+            gl_view_container.setLayoutParams(layoutParams);
         }
     }
 
