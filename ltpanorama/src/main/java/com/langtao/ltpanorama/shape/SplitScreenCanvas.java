@@ -33,7 +33,6 @@ public class SplitScreenCanvas {
 
     private VertexBuffer posArray1;
     private final float[] sPos1 ={
-            //左上
             0.0f,1.0f,      //右上角
             0.0f,0.0f,      //右下角
             1.0f,1.0f,      //左上角
@@ -44,7 +43,6 @@ public class SplitScreenCanvas {
 
     private VertexBuffer posArray2;
     private final float[] sPos2 ={
-            //右上
             -1.0f,1.0f,
             -1.0f,0.0f,
             0.0f,1.0f,
@@ -55,7 +53,6 @@ public class SplitScreenCanvas {
 
     private VertexBuffer posArray3;
     private final float[] sPos3 ={
-            //右下
             -1.0f,0.0f,
             -1.0f,-1.0f,
             0.0f,0.0f,
@@ -66,7 +63,6 @@ public class SplitScreenCanvas {
 
     private VertexBuffer posArray4;
     private final float[] sPos4 ={
-            //左下
             0.0f,0.0f,
             0.0f,-1.0f,
             1.0f,0.0f,
@@ -118,15 +114,15 @@ public class SplitScreenCanvas {
                         POSITION_COORDINATE_COMPONENT_COUNT, 0, 0);
                 break;
             case 2:
-                posArray2.setVertexAttribPointer(shader.aPositionLocation,
-                        POSITION_COORDINATE_COMPONENT_COUNT, 0, 0);
-                break;
-            case 3:
                 posArray3.setVertexAttribPointer(shader.aPositionLocation,
                         POSITION_COORDINATE_COMPONENT_COUNT, 0, 0);
                 break;
-            case 4:
+            case 3:
                 posArray4.setVertexAttribPointer(shader.aPositionLocation,
+                        POSITION_COORDINATE_COMPONENT_COUNT, 0, 0);
+                break;
+            case 4:
+                posArray2.setVertexAttribPointer(shader.aPositionLocation,
                         POSITION_COORDINATE_COMPONENT_COUNT, 0, 0);
                 break;
         }
