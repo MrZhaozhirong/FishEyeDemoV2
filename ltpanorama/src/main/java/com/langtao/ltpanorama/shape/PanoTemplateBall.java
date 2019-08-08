@@ -311,6 +311,7 @@ public class PanoTemplateBall {
                     new bootAnimationWaitThread().start();
                 } else {
                     setRenderMode(render_mode);
+                    mfingerRotationY = 90f;    // 避开拼接的中间的缝隙
                     updatingBallControlMode=false;
                     onSurfaceChanged(mSurfaceWidth, mSurfaceHeight);
                 }
