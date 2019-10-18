@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,6 +20,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -34,6 +37,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+
+import javax.microedition.khronos.opengles.GL10;
 
 import glnk.client.GlnkClient;
 import glnk.media.AViewRenderer;
@@ -69,7 +75,7 @@ public class LangTao360Activity extends Activity {
     private void initGLSurfaceView() {
         gl_view_container.removeAllViews();
         if( SDKinitUtil.checkGLEnvironment() ){
-            if(mLT360RenderMgr == null)
+            if( mLT360RenderMgr == null)
                 mLT360RenderMgr = new LangTao360RenderMgr();
             mLT360RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_DESKTOP);
             SharedPreferences prefs = getSharedPreferences("FISH_EYE", Context.MODE_PRIVATE);
@@ -227,7 +233,30 @@ public class LangTao360Activity extends Activity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
 
-
+    public void clickCaptureScreen(@SuppressLint("USELESS") View view) {
+        final ImageView someImageView = (ImageView) this.findViewById(R.id.someImageView);
+        //captureBitmap(new BitmapReadyCallbacks() {
+        //    @Override
+        //    public void onBitmapReady(Bitmap bitmap) {
+        //        someImageView.setImageBitmap(bitmap);
+        //    }
+        //});
+        // 2019.10.17为解决华为等一些机型利用glReadPixel生成屏幕缩略图出现黑屏没数据的情况
+        // 利用fbo重draw一遍再glReadPixel
+        mLT360RenderMgr.requestCaptureScreen(0, 0, gl_view.getWidth(), gl_view.getHeight(),
+                new LangTao360RenderMgr.CaptureScreenCallbacks() {
+                    @Override
+                    public void onCaptureScreenReady(final int w, final int h, final int[] data) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Bitmap bitmap = Bitmap.createBitmap(data, w, h, Bitmap.Config.ARGB_8888);
+                                someImageView.setImageBitmap(bitmap);
+                            }
+                        });
+                    }
+                });
+    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -263,7 +292,6 @@ public class LangTao360Activity extends Activity {
             gl_view_container.setLayoutParams(layoutParams);
         }
     }
-
 
     private class GLViewTouchListener implements View.OnTouchListener {
         private float oldDist;
@@ -424,7 +452,7 @@ public class LangTao360Activity extends Activity {
     }
 
     public void close_connect() {
-        if(player!=null){
+        if( player!=null){
             player.stop();
             //里面已经会把source也stop
             player.release();
@@ -432,6 +460,98 @@ public class LangTao360Activity extends Activity {
         }
     }
 
+    ///////////////////glSurfaceView截图 start//////////////////////////////
+    public interface BitmapReadyCallbacks {
+        void onBitmapReady(Bitmap bitmap);
+    }
+
+    private void captureBitmap(final BitmapReadyCallbacks bitmapReadyCallbacks){
+        if(gl_view==null)return;
+        gl_view.queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                //EGL10 egl = (EGL10) EGLContext.getEGL();
+                //GL10 gl = (GL10)egl.eglGetCurrentContext().getGL();
+                //final Bitmap snapshotBitmap = createBitmapFromGLSurface(0, 0,
+                //        glSurfaceView.getWidth(), glSurfaceView.getHeight(), gl);
+                final Bitmap snapshotBitmap = createBitmapFromGLSurface2(0, 0,
+                        gl_view.getWidth(), gl_view.getHeight(), null);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bitmapReadyCallbacks.onBitmapReady(snapshotBitmap);
+                    }
+                });
+            }
+        });
+    }
+
+    private Bitmap createBitmapFromGLSurface2(int x, int y, int w, int h, GL10 gl){
+        int bitmapBuffer[] = new int[w * h];
+        int bitmapSource[] = new int[w * h];
+        IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+        intBuffer.position(0);
+        try {
+            //int type_params[] = new int[10];
+            //int format_params[] = new int[10];
+            //GLES20.glGetIntegerv(GLES20.GL_IMPLEMENTATION_COLOR_READ_TYPE, type_params, 0);
+            //GLES20.glGetIntegerv(GLES20.GL_IMPLEMENTATION_COLOR_READ_FORMAT, format_params, 0);
+            //for(int i=0;i<10;i++) {
+            //    Log.i(TAG, "GL_IMPLEMENTATION_COLOR_READ_TYPE : "+type_params[i]);
+            //    Log.i(TAG, "GL_IMPLEMENTATION_COLOR_READ_FORMAT : "+format_params[i]);
+            //}
+            GLES20.glReadPixels(x, y, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, intBuffer);
+            boolean blackScreen = isBlackOrTransparent(w, h, bitmapBuffer);
+            if(blackScreen) {
+                Log.w(TAG, "createBitmapFromGLSurface2 is Black !!!");
+                return null;
+            }
+            int offset1, offset2;
+            for (int i = 0; i < h; i++) {
+                offset1 = i * w;
+                offset2 = (h - i - 1) * w;
+                for (int j = 0; j < w; j++) {
+                    int texturePixel = bitmapBuffer[offset1 + j];
+                    int blue = (texturePixel >> 16) & 0xff;
+                    int red = (texturePixel << 16) & 0x00ff0000;
+                    int pixel = (texturePixel & 0xff00ff00) | red | blue;
+                    bitmapSource[offset2 + j] = pixel;
+                }
+            }
+        } catch (GLException e) {
+            Log.e(TAG, "createBitmapFromGLSurface2 : " + e.getMessage(), e);
+            return null;
+        }
+        return Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
+    }
+
+    private boolean isBlackOrTransparent(int w, int h, int[] bitmapBuffer) {
+        //int i1 = bitmapBuffer[0]; 有符号数 -16777216
+        //byte byte1 = (byte) (i1 & 0xff);// 最低位 0
+        //byte byte2 = (byte) ((i1 >> 8) & 0xff);// 次低位 0
+        //byte byte3 = (byte) ((i1 >> 16) & 0xff);// 次高位 0
+        //byte byte4 = (byte) (i1 >>> 24);// 最高位 -1
+        int w_middle = w/2;
+        int h_middle = h/2;
+        int w_third = w/3;
+        int h_third = h/3;
+        // 只抽取屏幕中间部分(横纵向1/3~2/3)的中间竖线取值
+        boolean vertical = true;
+        for(int i=h_third; i<h_third*2; i++) {
+            vertical = bitmapBuffer[i * w + w_middle] == -16777216;
+            if(!vertical)
+                vertical = bitmapBuffer[i * w + w_middle] == 0;
+        }
+        //boolean horizontal = true;
+        //for(int i=w_third; i<w_third*2; i++) {
+        //    horizontal = bitmapBuffer[w * h_middle + i] == -16777216;
+        //    if(!horizontal)
+        //        horizontal = bitmapBuffer[w * h_middle + i] != 0;
+        //}
+        //return (vertical && horizontal);
+        return vertical;
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

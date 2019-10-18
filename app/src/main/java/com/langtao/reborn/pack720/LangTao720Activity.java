@@ -59,7 +59,6 @@ import glnk.media.GlnkDataSource;
 import glnk.media.GlnkPlayer;
 import glnk.media.VideoRenderer;
 
-import static android.R.attr.streamType;
 
 /**
  * Created by zzr on 2017/12/6.
@@ -760,7 +759,7 @@ public class LangTao720Activity extends Activity {
                 .sendData(Command.TLV_T_VIDEOMODE_REQ, switchStream.serialize());
         if(res == 0){
             Message message = handler.obtainMessage(handler.LOG_MSG);
-            message.obj = "Note：请求切换码率 streamType "+streamType;
+            message.obj = "Note：请求切换码率 streamType "+mStreamType;
             handler.sendMessage(message);
         }
     }

@@ -42,7 +42,7 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
 
     @Override
     public void onChanged(String devId, int nDevStatus) {
-        Log.d(TAG, "devId : "+devId+"      nDevStatus : "+nDevStatus     );
+        Log.i(TAG, "devId : "+devId+"      nDevStatus : "+nDevStatus     );
         if( statusMap.containsKey(devId) ){
             DeviceStatusObject deviceStatusObject = statusMap.get(devId);
             deviceStatusObject.setDevStatus(nDevStatus);
@@ -63,7 +63,7 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
 
     @Override
     public void onPushSvrInfo(String devId, String sPushSvrIp, int nPushSvrPort) {
-        Log.d(TAG, "devId : "+devId+"      sPushSvrIp : "+sPushSvrIp     );
+        Log.i(TAG, "devId : "+devId+"      sPushSvrIp : "+sPushSvrIp     );
         if( statusMap.containsKey(devId) ){
             DeviceStatusObject deviceStatusObject = statusMap.get(devId);
             deviceStatusObject.setDevPushSvrIp(sPushSvrIp);
@@ -94,7 +94,7 @@ public class DeviceStatusManager implements OnDeviceStatusChangedListener {
         }
         try{
             final DevCapability devFunInfo = gson.fromJson(sDevFunInfo, DevCapability.class);
-            Log.w(TAG, "devId : "+devId+"   devFunInfo : "+devFunInfo.toString());
+            Log.i(TAG, "devId : "+devId+"   devFunInfo : "+devFunInfo.toString());
 
             if( statusMap.containsKey(devId) ){
                 DeviceStatusObject deviceStatusObject = statusMap.get(devId);

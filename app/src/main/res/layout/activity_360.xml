@@ -15,7 +15,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="zz019dbf24"
+            android:text="zz02822080"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -104,7 +104,14 @@
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="180"
-            android:onClick="clickMode180"/>
+            android:onClick="clickMode180"
+            android:visibility="gone"/>
+        <Button
+            android:id="@+id/over_screen"
+            android:layout_width="55dp"
+            android:layout_height="wrap_content"
+            android:text="横屏"
+            android:onClick="clickOverScreen"/>
     </LinearLayout>
 
     <LinearLayout
@@ -127,7 +134,7 @@
             android:layout_width="112dp"
             android:layout_height="wrap_content"
             android:text="get frame"
-            android:onClick="clickCaptureFrame" />
+            android:onClick="clickCaptureScreen" />
         <Space
             android:layout_width="2dp"
             android:layout_height="match_parent"/>
@@ -145,4 +152,10 @@
         android:layout_width="350dp"
         android:layout_height="350dp"/>
 
+    <ImageView
+        android:layout_below="@id/third"
+        android:id="@+id/someImageView"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:src="@android:color/holo_red_light"/>
 </RelativeLayout>
