@@ -2,9 +2,12 @@ package com.langtao.ltpanorama;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.util.Log;
 
 import com.langtao.ltpanorama.component.YUVFrame;
+import com.langtao.ltpanorama.data.FrameBuffer;
 import com.langtao.ltpanorama.shape.Cylinder;
 import com.langtao.ltpanorama.shape.FishEye180;
 import com.langtao.ltpanorama.shape.FishEye360;
@@ -12,6 +15,8 @@ import com.langtao.ltpanorama.shape.FishEye360Desktop;
 import com.langtao.ltpanorama.shape.FourEye360;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.ltpanorama.shape.TwoRectangle;
+
+import java.nio.IntBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -132,6 +137,142 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         curvedPlate.onSurfaceChange(width, height);
     }
 
+    private int x, y;
+    private int w, h;
+    private boolean capture = false;
+    private FrameBuffer fbo;
+    private CaptureScreenCallbacks callback;
+    public interface CaptureScreenCallbacks {
+        void onCaptureScreenReady(int w,int h,int[] data);
+    }
+    //2019.10.17为解决华为等一些机型利用glReadPixel生成屏幕缩略图出现黑屏没数据的情况
+    // 利用fbo重draw一遍再glReadPixel
+    public void requestCaptureScreen(int x,int y, int w,int h,
+                                     CaptureScreenCallbacks callback){
+        if( fbo==null) {
+            fbo = new FrameBuffer();
+        } else {
+            if(this.w!=w || this.h!=h) {
+                fbo.reSize(w,h);
+            }
+        }
+        this.x = x;this.y = y;
+        this.w = w;this.h = h;
+        capture = true;
+        this.callback = callback;
+    }
+    private void captureScreen() {
+        int bitmapBuffer[] = new int[w * h];
+        int bitmapSource[] = new int[w * h];
+        IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+        intBuffer.position(0);
+        try {
+            //GLES30.glReadBuffer(GLES20.GL_COLOR_ATTACHMENT0);
+            GLES20.glReadPixels(x, y, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, intBuffer);
+            boolean blackScreen = isBlackOrTransparent(w, h, bitmapBuffer);
+            if(blackScreen) {
+                Log.w(TAG, "captureScreen is Black !!!");
+                return;
+            }
+            int offset1, offset2;
+            for (int i = 0; i < h; i++) {
+                offset1 = i * w;
+                offset2 = (h - i - 1) * w;
+                for (int j = 0; j < w; j++) {
+                    int texturePixel = bitmapBuffer[offset1 + j];
+                    int blue = (texturePixel >> 16) & 0xff;
+                    int red = (texturePixel << 16) & 0x00ff0000;
+                    int pixel = (texturePixel & 0xff00ff00) | red | blue;
+                    bitmapSource[offset2 + j] = pixel;
+                }
+            }
+        } catch (GLException e) {
+            Log.e(TAG, "captureScreen : " + e.getMessage(), e);
+        } finally {
+            if(callback!=null) callback.onCaptureScreenReady(w,h,bitmapSource.clone());
+        }
+    }
+    private boolean isBlackOrTransparent(int w, int h, int[] bitmapBuffer) {
+        //int i1 = bitmapBuffer[0]; 有符号数 -16777216
+        //byte byte1 = (byte) (i1 & 0xff);// 最低位 0
+        //byte byte2 = (byte) ((i1 >> 8) & 0xff);// 次低位 0
+        //byte byte3 = (byte) ((i1 >> 16) & 0xff);// 次高位 0
+        //byte byte4 = (byte) (i1 >>> 24);// 最高位 -1
+        int w_middle = w/2;
+        int h_middle = h/2;
+        int w_third = w/3;
+        int h_third = h/3;
+        // 只抽取屏幕中间部分(横纵向1/3~2/3)的中间竖线取值
+        boolean vertical = true;
+        for(int i=h_third; i<h_third*2; i++) {
+            vertical = bitmapBuffer[i * w + w_middle] == -16777216;
+            if(!vertical)
+                vertical = bitmapBuffer[i * w + w_middle] == 0;
+        }
+        //boolean horizontal = true;
+        //for(int i=w_third; i<w_third*2; i++) {
+        //    horizontal = bitmapBuffer[w * h_middle + i] == -16777216;
+        //    if(!horizontal)
+        //        horizontal = bitmapBuffer[w * h_middle + i] != 0;
+        //}
+        //return (vertical && horizontal);
+        return vertical;
+    }
+    private void drawCaptureScreen(YUVFrame frame) {
+        fbo.begin();
+        switch (RENDER_MODE) {
+            case LTRenderMode.RENDER_MODE_DESKTOP: {
+                if (!desktop.isInitialized) {
+                    desktop.onSurfaceCreate(frame);
+                }
+                desktop.onDrawFrame(frame);
+            }
+            break;
+            case LTRenderMode.RENDER_MODE_180: {
+                if (!curvedPlate.isInitialized) {
+                    curvedPlate.onSurfaceCreate(frame);
+                }
+                curvedPlate.onDrawFrame(frame);
+            }
+            break;
+            case LTRenderMode.RENDER_MODE_360: {
+                if (!bowl.isInitialized) {
+                    bowl.onSurfaceCreate(frame);
+                }
+                bowl.onDrawFrame(frame);
+            }
+            break;
+            case LTRenderMode.RENDER_MODE_FOUR_EYE: {
+                if (!fourEye.isInitialized) {
+                    fourEye.onSurfaceCreate(frame);
+                }
+                fourEye.onDrawFrame(frame);
+            }
+            break;
+            case LTRenderMode.RENDER_MODE_TWO_RECTANGLE: {
+                if (!rectangle.isInitialized) {
+                    rectangle.onSurfaceCreate(frame);
+                }
+                rectangle.onDrawFrame(frame);
+            }
+            break;
+            case LTRenderMode.RENDER_MODE_CYLINDER: {
+                if (!cylinder.isInitialized) {
+                    cylinder.onSurfaceCreate(frame);
+                }
+                cylinder.onDrawFrame(frame);
+            }
+            break;
+            default:
+                Log.w(TAG, "LangTao360RenderMgr RenderMode " + RENDER_MODE + " not recognized !!!");
+                break;
+        }
+        captureScreen();
+        fbo.end();
+    }
+
+
+
     @Override
     public void onDrawFrame(GL10 gl) {
         try{
@@ -177,6 +318,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                     default:
                         Log.w(TAG, "LangTao360RenderMgr RenderMode "+RENDER_MODE+" not recognized !!!");
                         break;
+                }
+                if( capture) {
+                    drawCaptureScreen(frame);
+                    capture = false;
                 }
                 if(frame!=null) frame.release();
             }else if(PIC_OR_VIDEO.equalsIgnoreCase(PIC)){
@@ -226,10 +371,6 @@ public class LangTao360RenderMgr extends LTRenderManager   {
             e.printStackTrace();
         }
     }
-
-
-
-
 
     @Override
     public void handleTouchUp(final float x, final float y, final float xVelocity, final float yVelocity) {

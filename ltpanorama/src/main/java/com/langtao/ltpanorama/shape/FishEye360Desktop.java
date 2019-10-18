@@ -184,12 +184,12 @@ public class FishEye360Desktop {
                 if (ret != 0) {
                     return;
                 }
-                Log.w(TAG, "width : " + outParam.width);
-                Log.w(TAG, "height : " + outParam.height);
-                Log.w(TAG, "circleCenterX : " + outParam.circleCenterX);
-                Log.w(TAG, "circleCenterY : " + outParam.circleCenterY);
-                Log.w(TAG, "verticalRadius : " + outParam.verticalRadius);
-                Log.w(TAG, "horizontalRadius : " + outParam.horizontalRadius);
+                //Log.w(TAG, "width : " + outParam.width);
+                //Log.w(TAG, "height : " + outParam.height);
+                //Log.w(TAG, "circleCenterX : " + outParam.circleCenterX);
+                //Log.w(TAG, "circleCenterY : " + outParam.circleCenterY);
+                //Log.w(TAG, "verticalRadius : " + outParam.verticalRadius);
+                //Log.w(TAG, "horizontalRadius : " + outParam.horizontalRadius);
 
                 out = FishEyeProc.oneFisheye360Func(100, outParam);
             } catch (Exception e) {

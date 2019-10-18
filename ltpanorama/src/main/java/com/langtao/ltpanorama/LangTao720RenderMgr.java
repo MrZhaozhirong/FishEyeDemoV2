@@ -1,8 +1,11 @@
 package com.langtao.ltpanorama;
 
+import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.util.Log;
 
 import com.langtao.ltpanorama.component.YUVFrame;
+import com.langtao.ltpanorama.data.FrameBuffer;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.ltpanorama.shape.PanoTemplateBall;
 import com.langtao.ltpanorama.shape.PanoTemplateFour;
@@ -10,6 +13,7 @@ import com.langtao.ltpanorama.shape.PanoTemplateRectangleFBO;
 import com.langtao.ltpanorama.shape.PanoramaNewBall;
 
 import java.io.File;
+import java.nio.IntBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -117,6 +121,88 @@ public class LangTao720RenderMgr extends LTRenderManager {
         fourTmBall.onSurfaceChanged(width, height);
     }
 
+    private int x, y;
+    private int w, h;
+    private boolean capture = false;
+    private FrameBuffer fbo;
+    private CaptureScreenCallbacks callback;
+    public interface CaptureScreenCallbacks {
+        void onCaptureScreenReady(int w,int h,int[] data);
+    }
+    public void requestCaptureScreen(int x,int y, int w,int h,
+                                     CaptureScreenCallbacks callback){
+        if( fbo==null) {
+            fbo = new FrameBuffer();
+        } else {
+            if(this.w!=w || this.h!=h) {
+                fbo.reSize(w,h);
+            }
+        }
+        this.x = x;this.y = y;
+        this.w = w;this.h = h;
+        capture = true;
+        this.callback = callback;
+    }
+    private void drawCaptureScreen(YUVFrame frame) {
+        fbo.begin();
+        if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
+            if(frame!=null) {
+                panoTmBall.onDrawFrame(frame);
+            }
+        }else if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_SCREEN_4)){
+            if(frame!=null) {
+                fourTmBall.onDrawFrame(frame);
+            }
+        }
+        captureScreen();
+        fbo.end();
+    }
+    private void captureScreen() {
+        int bitmapBuffer[] = new int[w * h];
+        int bitmapSource[] = new int[w * h];
+        IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+        intBuffer.position(0);
+        try {
+            //GLES30.glReadBuffer(GLES20.GL_COLOR_ATTACHMENT0);
+            GLES20.glReadPixels(x, y, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, intBuffer);
+            boolean blackScreen = isBlackOrTransparent(w, h, bitmapBuffer);
+            if(blackScreen) {
+                Log.w(TAG, "captureScreen is Black !!!");
+                return;
+            }
+            int offset1, offset2;
+            for (int i = 0; i < h; i++) {
+                offset1 = i * w;
+                offset2 = (h - i - 1) * w;
+                for (int j = 0; j < w; j++) {
+                    int texturePixel = bitmapBuffer[offset1 + j];
+                    int blue = (texturePixel >> 16) & 0xff;
+                    int red = (texturePixel << 16) & 0x00ff0000;
+                    int pixel = (texturePixel & 0xff00ff00) | red | blue;
+                    bitmapSource[offset2 + j] = pixel;
+                }
+            }
+        } catch (GLException e) {
+            Log.e(TAG, "captureScreen : " + e.getMessage(), e);
+        } finally {
+            if(callback!=null) callback.onCaptureScreenReady(w,h,bitmapSource.clone());
+        }
+    }
+    private boolean isBlackOrTransparent(int w, int h, int[] bitmapBuffer) {
+        int w_middle = w/2;
+        int h_middle = h/2;
+        int w_third = w/3;
+        int h_third = h/3;
+        // 只抽取屏幕中间部分(横纵向1/3~2/3)的中间竖线取值
+        boolean vertical = true;
+        for(int i=h_third; i<h_third*2; i++) {
+            vertical = bitmapBuffer[i * w + w_middle] == -16777216;
+            if(!vertical)
+                vertical = bitmapBuffer[i * w + w_middle] == 0;
+        }
+        return vertical;
+    }
+
     @Override
     public void onDrawFrame(GL10 gl) {
         try {
@@ -141,6 +227,10 @@ public class LangTao720RenderMgr extends LTRenderManager {
                                 panoTemplateConfigFileName_AbsolutePath);
                     }
                     fourTmBall.onDrawFrame(buffer);
+                }
+                if( capture) {
+                    drawCaptureScreen(buffer);
+                    capture = false;
                 }
                 if(buffer != null) buffer.release();
             }
