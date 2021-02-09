@@ -10,7 +10,6 @@ import android.widget.Toast;
 
 import com.langtao.PermissionUtils;
 import com.langtao.device.SDKinitUtil;
-import com.langtao.reborn.h264.DecodeH264Activity;
 import com.langtao.reborn.pack180.LangTao180Activity;
 import com.langtao.reborn.pack360.LangTao360Activity;
 import com.langtao.reborn.pack720.LangTao720Activity;
@@ -88,7 +87,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(new Intent(HomeActivity.this, LangTao180Activity.class));
                 break;
             case R.id.btn_decode_h264:
-                startActivity(new Intent(HomeActivity.this, DecodeH264Activity.class));
+                //startActivity(new Intent(HomeActivity.this, DecodeH264Activity.class));
                 break;
             case R.id.btn_encode_h264:
                 break;

@@ -28,6 +28,7 @@ import com.langtao.device.GlnkApplication;
 import com.langtao.device.SDKinitUtil;
 import com.langtao.ltpanorama.LangTao360RenderMgr;
 import com.langtao.ltpanorama.component.YUVFrame;
+import com.langtao.ltpanorama.shape.FishEye360Desktop;
 import com.langtao.ltpanorama.shape.LTRenderMode;
 import com.langtao.reborn.R;
 import com.langtao.reborn.pack180.Glnk180DataSourceListenerImpl;
@@ -64,12 +65,18 @@ public class LangTao360Activity extends Activity {
 
     private LangTao360RenderMgr mLT360RenderMgr;
 
+    private EditText overtureEt, UpperEt, LowerEt, WathPositionEt, ForwardPositionEt;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_360);
 
         gl_view_container = (RelativeLayout) findViewById(R.id.gl_view_container);
+        overtureEt = (EditText) findViewById(R.id.overture);
+        WathPositionEt = (EditText) findViewById(R.id.watch_position_z);
+        ForwardPositionEt = (EditText) findViewById(R.id.watch_position_y);
+        UpperEt = (EditText) findViewById(R.id.upper_vision);
+        LowerEt = (EditText) findViewById(R.id.lower_vision);
     }
 
     private void initGLSurfaceView() {
@@ -128,6 +135,17 @@ public class LangTao360Activity extends Activity {
         }
     }
 
+    private boolean getToolsData() {
+        FishEye360Desktop desktop = mLT360RenderMgr.getDesktopModel();
+        if(desktop == null) return false;
+        overtureEt.setText(String.valueOf(desktop.getOverture()));
+        WathPositionEt.setText(String.valueOf(desktop.getWatchPosition()));
+        ForwardPositionEt.setText(String.valueOf(desktop.getForwardPosition()));
+        UpperEt.setText(String.valueOf(desktop.getUpperVisionValue()));
+        LowerEt.setText(String.valueOf(desktop.getLowerVisionValue()));
+        return true;
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -136,7 +154,7 @@ public class LangTao360Activity extends Activity {
 
         close_connect();
 
-        if(mLT360RenderMgr!=null) {
+        if (mLT360RenderMgr!=null) {
             float[] currentRotation = mLT360RenderMgr.getRotationPoint();
             float currentScale = mLT360RenderMgr.getCurrentScale();
             if(currentRotation==null) return;
@@ -148,6 +166,44 @@ public class LangTao360Activity extends Activity {
             edit.apply();
         }
     }
+
+
+    //Note 谨慎调整，精确度0.01
+    public void clickSetOverture(@SuppressLint("USELESS") View view) {
+        FishEye360Desktop desktop = mLT360RenderMgr.getDesktopModel();
+        if(desktop == null) return;
+        String s = overtureEt.getText().toString();
+        desktop.setOverture(Double.valueOf(s));
+    }
+    //Note 精确度0.1
+    public void clickSetWatchPosition(@SuppressLint("USELESS") View view) {
+        FishEye360Desktop desktop = mLT360RenderMgr.getDesktopModel();
+        if(desktop == null) return;
+        String s = WathPositionEt.getText().toString();
+        desktop.setWatchPosition(Float.valueOf(s));
+    }
+    public void clickSetForwardPosition(@SuppressLint("USELESS") View view) {
+        FishEye360Desktop desktop = mLT360RenderMgr.getDesktopModel();
+        if(desktop == null) return;
+        String s = ForwardPositionEt.getText().toString();
+        desktop.setForwardPosition(Float.valueOf(s));
+    }
+    //Note 调整upper和lower的时候，请结合logcat的TAG = OneFishEye360的输出日志
+    //Note 调整upper和lower的时候，请结合logcat的TAG = OneFishEye360的输出日志
+    //Note 调整upper和lower的时候，请结合logcat的TAG = OneFishEye360的输出日志
+    public void clickSetUpperVision(@SuppressLint("USELESS") View view) {
+        FishEye360Desktop desktop = mLT360RenderMgr.getDesktopModel();
+        if(desktop == null) return;
+        String s = UpperEt.getText().toString();
+        desktop.setUpperVisionValue(Float.valueOf(s));
+    }
+    public void clickSetLowerVision(@SuppressLint("USELESS") View view) {
+        FishEye360Desktop desktop = mLT360RenderMgr.getDesktopModel();
+        if(desktop == null) return;
+        String s = LowerEt.getText().toString();
+        desktop.setLowerVisionValue(Float.valueOf(s));
+    }
+
 
     public void clickAddGid(@SuppressLint("USELESS") View view) {
         EditText gid = (EditText) findViewById(R.id.gid);
@@ -224,7 +280,7 @@ public class LangTao360Activity extends Activity {
 
     public void clickPreviewPicFishEye(@SuppressLint("USELESS") View view) {
         close_connect();
-        if(mLT360RenderMgr!=null) {
+        if (mLT360RenderMgr!=null) {
             mLT360RenderMgr.setPreviewFishEyePicture(PanoramaScreenshot_path+File.separator+"frame.jpg");
         }
     }
@@ -264,7 +320,7 @@ public class LangTao360Activity extends Activity {
                 == Configuration.ORIENTATION_LANDSCAPE) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             return true;
-        }else{
+        } else {
             return super.onKeyDown(keyCode, event);
         }
     }
@@ -408,7 +464,7 @@ public class LangTao360Activity extends Activity {
 
     public void open_connect(String gid, String username, String password,
                              int channelNo,int streamType,int dataType){
-        if(renderer!=null){
+        if (renderer!=null){
             renderer.release();
             renderer = null;
         }
@@ -419,17 +475,17 @@ public class LangTao360Activity extends Activity {
             @Override
             public void yuv_Callback(int width, int height, byte[] byYdata, int nYLen, byte[] byUdata, int nULen, byte[] byVdata, int nVLen) {
                 //Log.d(TAG, "Note: yuv_Callback !!! ");
-                if( mLT360RenderMgr != null ){
+                if (mLT360RenderMgr != null ){
                     //Log.i(TAG, "mLT360RenderMgr  add_buffer !!!");
                     mLT360RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
                 }
-                if(requestDumpYuv){
+                if (requestDumpYuv){
                     new DumpYUVFrameFile(width,height,byYdata,byUdata,byVdata,"dump_video.yuv").start();
                 }
             }
         });
 
-        if(source!=null){
+        if (source!=null){
             source.stop();
             source.release();
             source = null;
@@ -439,7 +495,7 @@ public class LangTao360Activity extends Activity {
         source.setGlnkDataSourceListener(dataSourceListener);
         source.setMetaData(gid, username, password, channelNo, streamType, dataType);
 
-        if(player!=null){
+        if (player!=null){
             player.stop();
             player.release();
             player = null;
@@ -449,6 +505,12 @@ public class LangTao360Activity extends Activity {
         player.setDataSource(source);
         player.setDisplay(renderer);
         player.start();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                getToolsData();
+            }
+        },  5_000);
     }
 
     public void close_connect() {

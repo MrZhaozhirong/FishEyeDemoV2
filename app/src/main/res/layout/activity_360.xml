@@ -15,7 +15,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="zz02822080"
+            android:text="ab18208dc1dca642d960"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -50,17 +50,25 @@
             android:text="连接"
             android:onClick="clickConnect" />
         <Button
+            android:id="@+id/capture_frame"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:text="截图"
+            android:onClick="clickCaptureScreen" />
+        <Button
             android:id="@+id/left_cruise"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="左转"
-            android:onClick="clickLeftCruise" />
+            android:onClick="clickLeftCruise"
+            android:visibility="gone"/>
         <Button
             android:id="@+id/right_cruise"
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="右转"
-            android:onClick="clickRightCruise"/>
+            android:onClick="clickRightCruise"
+            android:visibility="gone"/>
     </LinearLayout>
 
     <LinearLayout
@@ -111,7 +119,13 @@
             android:layout_width="55dp"
             android:layout_height="wrap_content"
             android:text="横屏"
-            android:onClick="clickOverScreen"/>
+            android:onClick="clickOverScreen"
+            android:visibility="gone"/>
+        <ImageView
+            android:id="@+id/someImageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@android:color/holo_red_light"/>
     </LinearLayout>
 
     <LinearLayout
@@ -119,22 +133,14 @@
         android:layout_below="@id/second"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
         <Button
             android:id="@+id/dump_yuv"
             android:layout_width="112dp"
             android:layout_height="wrap_content"
             android:text="dump yuv"
             android:onClick="clickDumpYuv" />
-        <Space
-            android:layout_width="2dp"
-            android:layout_height="match_parent"/>
-        <Button
-            android:id="@+id/capture_frame"
-            android:layout_width="112dp"
-            android:layout_height="wrap_content"
-            android:text="get frame"
-            android:onClick="clickCaptureScreen" />
         <Space
             android:layout_width="2dp"
             android:layout_height="match_parent"/>
@@ -147,15 +153,125 @@
     </LinearLayout>
 
     <RelativeLayout
-        android:layout_below="@id/third"
+        android:layout_below="@id/second"
         android:id="@+id/gl_view_container"
-        android:layout_width="350dp"
-        android:layout_height="350dp"/>
+        android:layout_width="280dp"
+        android:layout_height="292dp"/>
 
-    <ImageView
-        android:layout_below="@id/third"
-        android:id="@+id/someImageView"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:src="@android:color/holo_red_light"/>
+
+
+
+    <LinearLayout
+        android:layout_below="@id/second"
+        android:id="@+id/tool_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_marginStart="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="观察广度(float谨慎调整)"/>
+
+            <EditText
+                android:id="@+id/overture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
+
+            <Button
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:onClick="clickSetOverture"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_marginStart="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="观察高度(float)"/>
+
+            <EditText
+                android:id="@+id/watch_position_z"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
+
+            <Button
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:onClick="clickSetWatchPosition"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_marginStart="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="观察距离(float)"/>
+
+            <EditText
+                android:id="@+id/watch_position_y"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
+
+            <Button
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:onClick="clickSetForwardPosition"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_marginStart="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="滑动范围限制(上限)"/>
+            <EditText
+                android:id="@+id/upper_vision"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
+            <Button
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:onClick="clickSetUpperVision"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_marginStart="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="滑动范围限制(下限)"/>
+            <EditText
+                android:id="@+id/lower_vision"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""/>
+            <Button
+                android:layout_width="55dp"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:onClick="clickSetLowerVision"/>
+        </LinearLayout>
+    </LinearLayout>
 </RelativeLayout>

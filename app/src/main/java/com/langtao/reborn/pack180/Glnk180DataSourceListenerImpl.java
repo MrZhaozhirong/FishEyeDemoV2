@@ -1,7 +1,5 @@
 package com.langtao.reborn.pack180;
 
-import android.util.Log;
-
 import glnk.media.GlnkDataSourceListener;
 
 /**
@@ -40,7 +38,7 @@ public class Glnk180DataSourceListenerImpl implements GlnkDataSourceListener {
 
     @Override
     public void onConnecting() {
-        Log.d(TAG, "DataSource  onConnecting ... "+"\n");
+
     }
 
     @Override
@@ -50,12 +48,12 @@ public class Glnk180DataSourceListenerImpl implements GlnkDataSourceListener {
 
     @Override
     public void onConnected(int i, String s, int i1) {
-        Log.d(TAG, "DataSource  onConnected ... "+s+"\n");
+
     }
 
     @Override
     public void onAuthorized(int i) {
-        Log.d(TAG, "DataSource  onAuthorized ... "+i+"\n");
+
     }
 
     @Override
@@ -70,7 +68,7 @@ public class Glnk180DataSourceListenerImpl implements GlnkDataSourceListener {
 
     @Override
     public void onDisconnected(int i) {
-        Log.d(TAG, "DataSource  onDisconnected ... "+i+"\n");
+
     }
 
     @Override

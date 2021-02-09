@@ -15,7 +15,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="8041659c"
+            android:text="ae21022240380784ac37"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -35,7 +35,7 @@
             style="?android:attr/textAppearance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="123456"
+            android:text="1234"
             android:maxLines="1"/>
         <Space
             android:layout_width="2dp"
@@ -63,7 +63,8 @@
         android:layout_below="@id/first"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -152,14 +153,112 @@
             android:layout_height="wrap_content"
             android:text="平面"
             android:onClick="clickPaved" />
+
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="观察距离"/>
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:text="+"
+            android:onClick="clickFar"/>
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:text="-"
+            android:onClick="clickNear"/>
+        <EditText
+            android:id="@+id/view_distance"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text=""
+            android:inputType="number"/>
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:text="set"
+            android:onClick="clickSetDistance"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/fourth"
+        android:layout_below="@id/third"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText
+            android:id="@+id/cut_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.1"/>
+        <TextView
+            android:layout_marginStart="5dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上下边裁剪百分比 0.0~0.1, 重连设备生效"/>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/fifth"
+        android:layout_below="@id/fourth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText
+            android:id="@+id/ratio_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.5625"/>
+        <TextView
+            android:layout_marginStart="5dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="垂直边与水平边的比值 0.1~0.9, 重连设备生效"/>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/sixth"
+        android:layout_below="@id/fifth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/range_angle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="180"/>
+        <TextView
+            android:layout_marginStart="5dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="视场角, 重连设备生效"/>
     </LinearLayout>
 
 
 
-    <RelativeLayout
-        android:layout_below="@id/third"
-        android:id="@+id/gl_view_container"
-        android:layout_width="350dp"
-        android:layout_height="350dp"/>
 
+
+
+
+    <RelativeLayout
+        android:layout_below="@id/sixth"
+        android:id="@+id/gl_view_container"
+        android:layout_width="400dp"
+        android:layout_height="225dp"/>
+    <ImageView
+        android:layout_below="@id/sixth"
+        android:id="@+id/someImageView"
+        android:layout_width="80dp"
+        android:layout_height="45dp"
+        android:src="@android:color/holo_red_light"/>
+    <Button
+        android:layout_below="@id/sixth"
+        android:layout_alignParentEnd="true"
+        android:layout_width="55dp"
+        android:layout_height="wrap_content"
+        android:text="截图"
+        android:onClick="clickCaptureScreen"
+        android:src="@android:color/holo_red_light"/>
 </RelativeLayout>

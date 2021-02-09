@@ -2,6 +2,7 @@ package com.langtao.reborn.pack180;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -10,6 +11,7 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -42,6 +44,10 @@ public class LangTao180Activity extends Activity {
     public static final String TAG = "LangTao180Activity";
     private RelativeLayout gl_view_container;
     private GLSurfaceView gl_view;
+    private EditText et_cut_percent;
+    private EditText et_radio_percent;
+    private EditText et_view_distance;
+    private EditText et_range_angle;
     private LT180Handler handler;
     //nStreamType实时流，码流类型， 0-主码流； 1-次码流
     //dataType流数据类型, 0-视频流, 1-音频流, 2-音视频流
@@ -56,14 +62,20 @@ public class LangTao180Activity extends Activity {
         setContentView(R.layout.activity_180);
 
         gl_view_container = (RelativeLayout) findViewById(R.id.gl_view_container);
+        et_cut_percent = (EditText) findViewById(R.id.cut_percent);
+        et_radio_percent = (EditText) findViewById(R.id.ratio_percent);
+        et_view_distance = (EditText) findViewById(R.id.view_distance);
+        et_range_angle = (EditText) findViewById(R.id.range_angle);
 
         handler= new LT180Handler(LangTao180Activity.this);
+
+        initGLSurfaceView();
     }
 
     private void initGLSurfaceView() {
         gl_view_container.removeAllViews();
         if( SDKinitUtil.checkGLEnvironment() ){
-            if(mLT180RenderMgr==null)
+            if (mLT180RenderMgr==null)
                 mLT180RenderMgr = new LangTao180RenderMgr();
             mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180);
             gl_view = new GLSurfaceView(LangTao180Activity.this);
@@ -85,21 +97,15 @@ public class LangTao180Activity extends Activity {
     protected void onResume() {
         super.onResume();
         Log.w(TAG, TAG+" onResume");
-        if(gl_view!=null){
+        if( gl_view!=null){
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     gl_view.onResume();
+                    float distance = mLT180RenderMgr.getPavedRect().getDistance();
+                    et_view_distance.setText(String.valueOf(distance));
                 }
-            },2000);
-        }else {
-            //延时初始化，有效降低初始化时候主线程卡住导致无响应的问题。
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    initGLSurfaceView();
-                }
-            },5000);
+            }, 2000);
         }
     }
 
@@ -108,10 +114,14 @@ public class LangTao180Activity extends Activity {
         super.onPause();
         Log.w(TAG, TAG+" onPause");
         if(gl_view!=null) gl_view.onPause();
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.w(TAG, TAG+" onDestroy");
+        //disconnectDevice();
         close_connect();
-
-        release();
     }
 
     public void clickAddGid(@SuppressLint("USELESS") View view) {
@@ -126,44 +136,48 @@ public class LangTao180Activity extends Activity {
         open_connect(gid.getText().toString(),
                 account.getText().toString(), password.getText().toString(),
                 channelNo, streamType, dataType);
-    }
-
-    public void clickSearchVodPlayback(@SuppressLint("USELESS") View view) {
-        EditText et_gid = (EditText) findViewById(R.id.gid);
-        EditText et_account = (EditText) findViewById(R.id.account);
-        EditText et_password = (EditText) findViewById(R.id.password);
-
-        if (vodChannel != null) {
-            vodChannel.stop();
-            vodChannel.release();
-            vodChannel = null;
+        try{
+            //Warm：在连接视频前调用。连接后无效。
+            String s = et_cut_percent.getText().toString();
+            mLT180RenderMgr.getPavedRect().setCutPercent(Float.parseFloat(s));
+            String s1 = et_radio_percent.getText().toString();
+            mLT180RenderMgr.getPavedRect().setRadioPercent(Float.parseFloat(s1));
+            String s2 = et_range_angle.getText().toString();
+            mLT180RenderMgr.getPavedRect().setRangeAngle(Float.parseFloat(s2));
+        }catch (Exception e){
+            e.getMessage();
         }
-
-        Log.w(TAG, "设备sd卡连接... ...");
-        vodSource = new VideoSearchDataSourceImpl(handler);
-        vodChannel = new GlnkChannel(vodSource);
-        vodChannel.setMetaData(et_gid.getText().toString(),
-                et_account.getText().toString(),
-                et_password.getText().toString(),
-                0, 2, 0);
-        vodChannel.start();
     }
 
+    public void clickSetDistance(@SuppressLint("USELESS") View view) {
+        try{
+            String s = et_view_distance.getText().toString();
+            // 即时生效，任意时刻调用。
+            mLT180RenderMgr.getPavedRect().setDistance(Float.parseFloat(s));
+        }catch (Exception e){
+            e.getMessage();
+        }
+    }
 
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
+    public void clickNear(@SuppressLint("USELESS") View view) {
+        mLT180RenderMgr.getPavedRect().nearDistance();
+        float distance = mLT180RenderMgr.getPavedRect().getDistance();
+        et_view_distance.setText(String.valueOf(distance));
+    }
+    public void clickFar(@SuppressLint("USELESS") View view) {
+        mLT180RenderMgr.getPavedRect().farDistance();
+        float distance = mLT180RenderMgr.getPavedRect().getDistance();
+        et_view_distance.setText(String.valueOf(distance));
     }
 
     public void clickCurved(@SuppressLint("USELESS")  View view) {
-        if(mLT180RenderMgr != null){
+        if( mLT180RenderMgr != null){
             mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180);
         }
     }
 
     public void clickPaved(@SuppressLint("USELESS") View view) {
-        if(mLT180RenderMgr != null){
+        if( mLT180RenderMgr != null){
             mLT180RenderMgr.setRenderMode(LTRenderMode.RENDER_MODE_180_PAVED);
         }
     }
@@ -266,27 +280,65 @@ public class LangTao180Activity extends Activity {
         }
     }
 
-    private void release() {
-        if (vodChannel!=null){
-            vodChannel.stop();
-            vodChannel.release();
-            vodChannel = null;
-        }
-        if (renderer!=null){
-            renderer.stop();
-            renderer.release();
-            renderer = null;
-        }
-        if (player!=null){
-            player.stop();
-            player.release();
-            player = null;
-        }
+    private float spacing(MotionEvent event) {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////   截图显示   //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public void clickCaptureScreen(@SuppressLint("USELESS") View view) {
+        final ImageView someImageView = (ImageView) this.findViewById(R.id.someImageView);
+
+        mLT180RenderMgr.requestCaptureScreen(0, 0, gl_view.getWidth(), gl_view.getHeight(),
+                new LangTao180RenderMgr.CaptureScreenCallbacks() {
+                    @Override
+                    public void onCaptureScreenReady(final int w, final int h, final int[] data) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Bitmap bitmap = Bitmap.createBitmap(data, w, h, Bitmap.Config.ARGB_8888);
+                                someImageView.setImageBitmap(bitmap);
+                            }
+                        });
+                    }
+                });
+    }
+
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////   搜索录像回放   //////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public void clickSearchVodPlayback(@SuppressLint("USELESS") View view) {
+        EditText et_gid = (EditText) findViewById(R.id.gid);
+        EditText et_account = (EditText) findViewById(R.id.account);
+        EditText et_password = (EditText) findViewById(R.id.password);
+        if (vodChannel != null) {
+            vodChannel.stop();
+            vodChannel.release();
+            vodChannel = null;
+        }
+        Log.w(TAG, "设备sd卡连接... ...");
+        vodSource = new VideoSearchDataSourceImpl(handler);
+        vodChannel = new GlnkChannel(vodSource);
+        vodChannel.setMetaData(et_gid.getText().toString(),
+                et_account.getText().toString(),
+                et_password.getText().toString(),
+                0, 2, 0);
+        vodChannel.start();
+    }
+    public void disconnectDevice() {
+        if (vodChannel != null) {
+            vodChannel.stop();
+            vodChannel.release();
+            vodChannel = null;
+        }
+    }
+
     private GlnkChannel vodChannel;
     private VideoSearchDataSourceImpl vodSource;
     private VideoSearchDataSourceListenerImpl videoSearchListener;
@@ -295,14 +347,12 @@ public class LangTao180Activity extends Activity {
         EditText et_day = (EditText) findViewById(R.id.day);
         EditText et_hour = (EditText) findViewById(R.id.hour);
         EditText et_minute = (EditText) findViewById(R.id.minute);
-
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         Date d = new Date();
         Calendar c = Calendar.getInstance();
         c.set(Calendar.DAY_OF_MONTH, Integer.parseInt(et_day.getText().toString()));
         c.set(Calendar.HOUR, Integer.parseInt(et_hour.getText().toString()));
         c.set(Calendar.MINUTE, Integer.parseInt(et_minute.getText().toString()));
-
         int rs = this.vodChannel.searchRemoteFile2(
                 0xff,
                 0xff,
@@ -314,12 +364,10 @@ public class LangTao180Activity extends Activity {
                 c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1,
                 c.get(Calendar.DAY_OF_MONTH),
                 c.get(Calendar.HOUR)+23, c.get(Calendar.MINUTE)+59, 59);
-
         if (rs < 0) {
             Toast.makeText(this, "搜索文件失败", Toast.LENGTH_SHORT).show();
         }
     }
-
     public void stopVideoSearch() {
         if (vodChannel != null) {
             vodChannel.stop();
@@ -336,27 +384,21 @@ public class LangTao180Activity extends Activity {
         }
         source = new GlnkDataSource(GlnkClient.getInstance());
         source.getGlnkChannel().setReconnectable(false);
-
         EditText et_gid = (EditText) findViewById(R.id.gid);
         EditText et_account = (EditText) findViewById(R.id.account);
         EditText et_password = (EditText) findViewById(R.id.password);
-        streamType = 2;
         source.setMetaData(et_gid.getText().toString(),
                 et_account.getText().toString(), et_password.getText().toString(),
                 channelNo, streamType, dataType);
-
         if(videoSearchListener ==null) {
             videoSearchListener = new VideoSearchDataSourceListenerImpl(handler);
             videoSearchListener.setPlaybackVideoFilename(fileName);
         }
-
         source.setGlnkDataSourceListener(videoSearchListener);
-
         if(renderer!=null){
             renderer.release();
             renderer = null;
         }
-
         renderer = new AViewRenderer(LangTao180Activity.this, null);
         ((AViewRenderer) renderer).setCallBackDataType(AViewRenderer.CB_DATA_TYPE_YUV);
         ((AViewRenderer) renderer).setValidateYUVCallback(new AViewRenderer.ValidateYUVCallback() {
@@ -365,15 +407,14 @@ public class LangTao180Activity extends Activity {
                 //Log.d(TAG, "Note: yuv_Callback !!! ");
                 if( mLT180RenderMgr != null ){
                     //Log.i(TAG, "mLT180RenderMgr  add_buffer !!!");
-                    mLT180RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
+                    mLT180RenderMgr.addBuffer(width,height, byYdata,byUdata,byVdata);
                 }
                 if(requestDumpYuv){
                     new DumpYUVFrameFile(width,height,byYdata,byUdata,byVdata,"dump_video.yuv").start();
                 }
             }
         });
-
-        if(player!=null){
+        if( player!=null){
             player.stop();
             player.release();
             player = null;
@@ -391,12 +432,10 @@ public class LangTao180Activity extends Activity {
             Log.w(TAG, "playbackVideoFilename 格式错误。");
             return;
         }
-
         int count = Integer.parseInt(split[0]);
         int recordType = Integer.parseInt(split[1]);
         String startTimeStr = split[2]; // "%d:%d:%d:%d:%d:%d"
         String endTimeStr = split[3];
-
         String[] startTime = startTimeStr.split(":");
         if(startTime.length != 6) {
             Log.w(TAG, "playbackVideoFilename 格式错误。");
@@ -408,7 +447,6 @@ public class LangTao180Activity extends Activity {
         int iStartHour = Integer.parseInt(startTime[3]);
         int iStartMinute = Integer.parseInt(startTime[4]);
         int iStartSec = Integer.parseInt(startTime[5]);
-
         int result_video_file_request = source.remoteFileRequest2(
                 iStartYear, iStartMonth, iStartDay, iStartHour, iStartMinute, iStartSec);
         Log.w(TAG, "result_vodfile_request = "
@@ -418,7 +456,6 @@ public class LangTao180Activity extends Activity {
             //requestPlayVideo(playbackVideoFilename);
         }
     }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////   链接直播视频源   ////////////////////////////////////////////////////////////////////////
@@ -431,7 +468,7 @@ public class LangTao180Activity extends Activity {
 
     public void open_connect(String gid, String username, String password,
                              int channelNo,int streamType,int dataType){
-        if(renderer!=null){
+        if( renderer!=null){
             renderer.release();
             renderer = null;
         }
@@ -441,9 +478,7 @@ public class LangTao180Activity extends Activity {
         ((AViewRenderer) renderer).setValidateYUVCallback(new AViewRenderer.ValidateYUVCallback() {
             @Override
             public void yuv_Callback(int width, int height, byte[] byYdata, int nYLen, byte[] byUdata, int nULen, byte[] byVdata, int nVLen) {
-                //Log.d(TAG, "Note: yuv_Callback !!! ");
                 if( mLT180RenderMgr != null ){
-                    //Log.i(TAG, "mLT180RenderMgr  add_buffer !!!");
                     mLT180RenderMgr.addBuffer(width,height,byYdata,byUdata,byVdata);
                 }
                 if(requestDumpYuv){
@@ -452,7 +487,7 @@ public class LangTao180Activity extends Activity {
             }
         });
 
-        if(source!=null){
+        if( source!=null){
             source.stop();
             source.release();
             source = null;
@@ -461,7 +496,6 @@ public class LangTao180Activity extends Activity {
             dataSourceListener = new Glnk180DataSourceListenerImpl();
         source = new GlnkDataSource(GlnkClient.getInstance());
         source.setGlnkDataSourceListener(dataSourceListener);
-        streamType = 0;
         source.setMetaData(gid, username, password, channelNo, streamType, dataType);
 
         if(player!=null){
@@ -484,7 +518,6 @@ public class LangTao180Activity extends Activity {
             player = null;
         }
     }
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

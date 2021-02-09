@@ -38,8 +38,8 @@ public class SDKinitUtil {
         gClient.setOnDeviceStatusChangedListener(DeviceStatusManager.getInstance());
         gClient.setAppKey("yTLzaJ5iWdtOUMd5/K7l4IDn/9hFALSXr8ghZA==");    //applicationId "com.langtao.fisheye"
         //gClient.setAppKey("6Dfua7h3VcJDS9Y0/6Kl65Xo94JCBumJ880=");      //applicationId "com.langtao.v9"
-        gClient.setCliLbsType(GlnkClient.CLI_PLANEX_JAPAN);
         gClient.start();
+        gClient.setCliLbsType(GlnkClient.CLI_PLANEX_JAPAN);
         count++;
         Log.d("SDKinitUtil", "SDKInitUtil initializ done ... ...");
     }
