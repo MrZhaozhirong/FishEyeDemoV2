@@ -66,8 +66,13 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     }
 
 
+    public FishEye360Desktop getDesktopModel() {
+        return desktop;
+    }
+
     private FishEye360Desktop desktop;
     private FishEye360 bowl;
+    //
     private FourEye360 fourEye;
     private TwoRectangle rectangle;
     private Cylinder cylinder;
@@ -145,21 +150,15 @@ public class LangTao360RenderMgr extends LTRenderManager   {
     public interface CaptureScreenCallbacks {
         void onCaptureScreenReady(int w,int h,int[] data);
     }
-    //2019.10.17为解决华为等一些机型利用glReadPixel生成屏幕缩略图出现黑屏没数据的情况
+    // 2019.10.17为解决华为等一些机型利用glReadPixel生成屏幕缩略图出现黑屏没数据的情况
     // 利用fbo重draw一遍再glReadPixel
     public void requestCaptureScreen(int x,int y, int w,int h,
                                      CaptureScreenCallbacks callback){
-        if( fbo==null) {
-            fbo = new FrameBuffer();
-        } else {
-            if(this.w!=w || this.h!=h) {
-                fbo.reSize(w,h);
-            }
-        }
         this.x = x;this.y = y;
         this.w = w;this.h = h;
         capture = true;
         this.callback = callback;
+        Log.i(TAG, "requestCaptureScreen : "+w+"x"+h);
     }
     private void captureScreen() {
         int bitmapBuffer[] = new int[w * h];
@@ -219,6 +218,10 @@ public class LangTao360RenderMgr extends LTRenderManager   {
         return vertical;
     }
     private void drawCaptureScreen(YUVFrame frame) {
+        if( fbo==null) {
+            fbo = new FrameBuffer();
+            fbo.setup(w,h);
+        }
         fbo.begin();
         switch (RENDER_MODE) {
             case LTRenderMode.RENDER_MODE_DESKTOP: {
@@ -267,8 +270,8 @@ public class LangTao360RenderMgr extends LTRenderManager   {
                 Log.w(TAG, "LangTao360RenderMgr RenderMode " + RENDER_MODE + " not recognized !!!");
                 break;
         }
-        captureScreen();
         fbo.end();
+        captureScreen();
     }
 
 

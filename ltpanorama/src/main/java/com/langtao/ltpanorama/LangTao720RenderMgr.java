@@ -131,19 +131,16 @@ public class LangTao720RenderMgr extends LTRenderManager {
     }
     public void requestCaptureScreen(int x,int y, int w,int h,
                                      CaptureScreenCallbacks callback){
-        if( fbo==null) {
-            fbo = new FrameBuffer();
-        } else {
-            if(this.w!=w || this.h!=h) {
-                fbo.reSize(w,h);
-            }
-        }
         this.x = x;this.y = y;
         this.w = w;this.h = h;
         capture = true;
         this.callback = callback;
     }
     private void drawCaptureScreen(YUVFrame frame) {
+        if( fbo==null) {
+            fbo = new FrameBuffer();
+            fbo.setup(w,h);
+        }
         fbo.begin();
         if(panoRenderType.equalsIgnoreCase(LT_PANORAMA_ANIMATION_3)) {
             if(frame!=null) {
@@ -154,8 +151,8 @@ public class LangTao720RenderMgr extends LTRenderManager {
                 fourTmBall.onDrawFrame(frame);
             }
         }
-        captureScreen();
         fbo.end();
+        captureScreen();
     }
     private void captureScreen() {
         int bitmapBuffer[] = new int[w * h];

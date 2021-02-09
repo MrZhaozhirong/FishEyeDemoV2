@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 public class FishEye360Desktop {
 
     private static final String TAG = "OneFishEye360";
-    private final static double overture = 90;
+    private double overture = 50;
     //================================建模视频帧相关==============================================================
     //================================建模视频帧相关==============================================================
     private static final int BYTES_PER_FLOAT = 4;
@@ -72,9 +72,75 @@ public class FishEye360Desktop {
     private volatile boolean isNeedAutoScroll = false;
     private volatile int direction = 0;
     private volatile boolean operating = false;
-    private float UPPER_VISION_VALUE = -55.0f;
-    private float LOWER_VISION_VALUE = -13.0f;
+    private float UPPER_VISION_VALUE = -10.0f;
+    private float LOWER_VISION_VALUE = -5.0f;
+    private float watch_position_z = 0.2f;
+    private float watch_position_y = -0.3f;
 
+    public float getForwardPosition() {
+        return watch_position_y;
+    }
+
+    public void setForwardPosition(float position) {
+        this.watch_position_y = position;
+        if (mCameraEye!=null) {
+            mCameraEye.setCameraVector(0, watch_position_y, watch_position_z);
+            mCameraEye.setTargetViewVector(0.0f, 1.0f, 0.5f);
+            mCameraEye.setCameraUpVector(0f, 0f, 1.0f);
+
+            Matrix.setLookAtM(this.mViewMatrix, 0,
+                    mCameraEye.cx, mCameraEye.cy, mCameraEye.cz, //摄像机位置
+                    mCameraEye.tx, mCameraEye.ty, mCameraEye.tz, //摄像机目标视点
+                    mCameraEye.upx, mCameraEye.upy, mCameraEye.upz);//摄像机头顶方向向量
+        }
+    }
+
+    public float getWatchPosition() {
+        return watch_position_z;
+    }
+
+    public void setWatchPosition(float watch_position) {
+        this.watch_position_z = watch_position;
+        if (mCameraEye!=null) {
+            mCameraEye.setCameraVector(0, watch_position_y, watch_position_z);
+            mCameraEye.setTargetViewVector(0.0f, 1.0f, 0.5f);
+            mCameraEye.setCameraUpVector(0f, 0f, 1.0f);
+
+            Matrix.setLookAtM(this.mViewMatrix, 0,
+                    mCameraEye.cx, mCameraEye.cy, mCameraEye.cz, //摄像机位置
+                    mCameraEye.tx, mCameraEye.ty, mCameraEye.tz, //摄像机目标视点
+                    mCameraEye.upx, mCameraEye.upy, mCameraEye.upz);//摄像机头顶方向向量
+        }
+    }
+
+    public double getOverture() {
+        return overture;
+    }
+
+    public void setOverture(double overture) {
+        this.overture = overture;
+        if (mSurfaceWidth!=0) {
+            float ratio = (float) mSurfaceWidth / (float) mSurfaceHeight;
+            MatrixHelper.perspectiveM(this.mProjectionMatrix,
+                    (float) overture, ratio, 0f, 1000f);
+        }
+    }
+
+    public float getUpperVisionValue() {
+        return UPPER_VISION_VALUE;
+    }
+
+    public void setUpperVisionValue(float UPPER_VISION_VALUE) {
+        this.UPPER_VISION_VALUE = UPPER_VISION_VALUE;
+    }
+
+    public float getLowerVisionValue() {
+        return LOWER_VISION_VALUE;
+    }
+
+    public void setLowerVisionValue(float LOWER_VISION_VALUE) {
+        this.LOWER_VISION_VALUE = LOWER_VISION_VALUE;
+    }
 
     //================================操作封装==================================================================
     //================================模型操作相关==============================================================
@@ -87,8 +153,8 @@ public class FishEye360Desktop {
         Matrix.scaleM(this.mModelMatrix, 0, 1.0f, 1.0f, 1.0f);
 
         mCameraEye = new CameraViewport();
-        mCameraEye.setCameraVector(0, -0.4f, 0.15f);
-        mCameraEye.setTargetViewVector(0.0f, 0.9f, 0.9f);
+        mCameraEye.setCameraVector(0, watch_position_y, watch_position_z);
+        mCameraEye.setTargetViewVector(0.0f, 1.0f, 0.5f);
         mCameraEye.setCameraUpVector(0f, 0f, 1.0f);
     }
 
@@ -129,7 +195,7 @@ public class FishEye360Desktop {
         mSurfaceWidth = width;
         mSurfaceHeight = height;
         MatrixHelper.perspectiveM(this.mProjectionMatrix,
-                (float) overture, ratio, 0.1f, 100f);
+                (float) overture, ratio, 0f, 1000f);
 
         Matrix.setLookAtM(this.mViewMatrix, 0,
                 mCameraEye.cx, mCameraEye.cy, mCameraEye.cz, //摄像机位置
@@ -184,12 +250,12 @@ public class FishEye360Desktop {
                 if (ret != 0) {
                     return;
                 }
-                //Log.w(TAG, "width : " + outParam.width);
-                //Log.w(TAG, "height : " + outParam.height);
-                //Log.w(TAG, "circleCenterX : " + outParam.circleCenterX);
-                //Log.w(TAG, "circleCenterY : " + outParam.circleCenterY);
-                //Log.w(TAG, "verticalRadius : " + outParam.verticalRadius);
-                //Log.w(TAG, "horizontalRadius : " + outParam.horizontalRadius);
+                Log.w(TAG, "width : " + outParam.width);
+                Log.w(TAG, "height : " + outParam.height);
+                Log.w(TAG, "circleCenterX : " + outParam.circleCenterX);
+                Log.w(TAG, "circleCenterY : " + outParam.circleCenterY);
+                Log.w(TAG, "verticalRadius : " + outParam.verticalRadius);
+                Log.w(TAG, "horizontalRadius : " + outParam.horizontalRadius);
 
                 out = FishEyeProc.oneFisheye360Func(100, outParam);
             } catch (Exception e) {
@@ -488,7 +554,7 @@ public class FishEye360Desktop {
         if (this.mFingerRotationY < UPPER_VISION_VALUE) {
             this.mFingerRotationY = UPPER_VISION_VALUE;
         }
-        Log.w(TAG, "mFingerRotationY : " + mFingerRotationY);
+        Log.i(TAG, "RotationY : " + mFingerRotationY);
 
         this.mLastX = x;
         this.mLastY = y;

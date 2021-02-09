@@ -240,7 +240,7 @@ public class FishEye180 {
         return true;
     }
 
-    public void setAttributeStatus() {
+    private void setAttributeStatus() {
         if(shader == null) return ;
         GLES20.glUseProgram( shader.getShaderProgramId() );
         float kColorConversion420[] = {
@@ -269,7 +269,7 @@ public class FishEye180 {
         GLES20.glUniform1f(shader.uLocationRectHeight, outParam.rectHeight);
     }
 
-    public void draw(){
+    private void draw(){
         if(shader == null) return ;
         GLES20.glUseProgram(shader.getShaderProgramId());
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
@@ -336,7 +336,7 @@ public class FishEye180 {
     private float[] mMatrixFingerRotationX = new float[16];
     private float[] mMatrixFingerRotationY = new float[16];
     private float[] mMatrixFingerRotationZ = new float[16];
-    public void resetMatrixStatus(){
+    private void resetMatrixStatus(){
         mfingerRotationX = 0;
         mfingerRotationY = 0;
         mfingerRotationZ = 0;
@@ -357,7 +357,7 @@ public class FishEye180 {
     //    }
     //};
     private int cruise_flag = 0;
-    public void updateCruise() {
+    private void updateCruise() {
         if(isAutoCruise && getCurrentPerspectiveMode()==FishEye180.MODE_ENDOSCOPE){
             if(cruise_flag == 0){
                 this.mfingerRotationX += 0.2f;
@@ -373,7 +373,7 @@ public class FishEye180 {
     }
 
 
-    public boolean updateTexture(@NonNull YUVFrame yuvFrame ){
+    private boolean updateTexture(@NonNull YUVFrame yuvFrame ){
         if(yuvFrame==null || shader == null) return false;
         int width = yuvFrame.getWidth();
         int height = yuvFrame.getHeight();
@@ -413,7 +413,7 @@ public class FishEye180 {
         return true;
     }
 
-    public void updateMatrix() {
+    private void updateMatrix() {
 
         Matrix.setIdentityM(this.mModelMatrix, 0);
         Matrix.scaleM(this.mModelMatrix,0,1.0f,1.0f,1.0f);

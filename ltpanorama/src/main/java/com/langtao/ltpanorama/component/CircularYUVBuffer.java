@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class CircularYUVBuffer {
     private boolean DEBUG = false;
     private static final String TAG = LTRenderManager.TAG+"-FrameBuffer";
-    private final int BUFF_SIZE = 2;
+    private final int BUFF_SIZE = 1;
 
     private YUVFrame[] framePool = new YUVFrame[BUFF_SIZE+1];
     //private ConcurrentLinkedQueue<YUVFrame> queue = new ConcurrentLinkedQueue<>();

@@ -58,22 +58,84 @@ public class FishEye180Rectangle {
         return mMVPMatrix;
     }
 
+    private float cutPercent;
+    public float getCutPercent() {
+        return cutPercent;
+    }
+    public void setCutPercent(float cutPercent) {
+        this.cutPercent = cutPercent;
+    }
+
+    private float radioPercent;
+    public float getRadioPercent() {
+        return radioPercent;
+    }
+    public void setRadioPercent(float radioPercent) {
+        this.radioPercent = radioPercent;
+    }
+
+    private float rangeAngle;
+    public float getRangeAngle() {
+        return rangeAngle;
+    }
+    public void setRangeAngle(float rangeAngle) {
+        this.rangeAngle = rangeAngle;
+    }
+
+    private float distanceZ;
+    public float getDistance() {
+        return distanceZ;
+    }
+    public void setDistance(float distanceZ) {
+        eye.cz = this.distanceZ = distanceZ;
+        eye.setCameraVector(eye.cx, eye.cy, eye.cz);
+        eye.setTargetViewVector(eye.tx, eye.ty, eye.tz);
+        eye.setCameraUpVector(eye.upx, eye.upy, eye.upz);
+        Matrix.setLookAtM(this.mViewMatrix, 0,
+                eye.cx, eye.cy, eye.cz,
+                eye.tx, eye.ty, eye.tz,
+                eye.upx, eye.upy, eye.upz);
+    }
 
     public FishEye180Rectangle(){
         resetMatrixStatus();
         Matrix.setIdentityM(this.mModelMatrix, 0);
         Matrix.setIdentityM(this.mProjectionMatrix, 0);
         Matrix.setIdentityM(this.mViewMatrix, 0);
-
+        cutPercent = 0.1f;
+        distanceZ = 1.5f;
+        radioPercent = 0.75f;
+        rangeAngle = 180.0f;
     }
 
+    public void nearDistance() {
+        eye.setCameraVector(eye.cx, eye.cy, eye.cz-=0.01f);
+        eye.setTargetViewVector(eye.tx, eye.ty, eye.tz);
+        eye.setCameraUpVector(eye.upx, eye.upy, eye.upz);
+        distanceZ = eye.cz;
+        Matrix.setLookAtM(this.mViewMatrix, 0,
+                eye.cx, eye.cy, eye.cz,
+                eye.tx, eye.ty, eye.tz,
+                eye.upx, eye.upy, eye.upz);
+    }
+    public void farDistance() {
+        eye.setCameraVector(eye.cx, eye.cy, eye.cz+=0.01f);
+        eye.setTargetViewVector(eye.tx, eye.ty, eye.tz);
+        eye.setCameraUpVector(eye.upx, eye.upy, eye.upz);
+        distanceZ = eye.cz;
+        Matrix.setLookAtM(this.mViewMatrix, 0,
+                eye.cx, eye.cy, eye.cz,
+                eye.tx, eye.ty, eye.tz,
+                eye.upx, eye.upy, eye.upz);
+    }
 
-    public void onSurfaceCreate(@NonNull YUVFrame frame){
+    public void onSurfaceCreate(@NonNull YUVFrame frame) {
         if(frame==null) return;
         createBufferData(frame.getWidth(),frame.getHeight(),frame);
         buildProgram();
         initTexture(frame.getWidth(), frame.getHeight(), frame);
         setAttributeStatus();
+
         isInitialized = true;
     }
 
@@ -86,7 +148,7 @@ public class FishEye180Rectangle {
                 (float) overture, ratio, 0.1f, 100f);
 
         eye = new CameraViewport();
-        eye.setCameraVector(0, 0, 1.3f);
+        eye.setCameraVector(0, 0, distanceZ);
         eye.setTargetViewVector(0f, 0f, 0.0f);
         eye.setCameraUpVector(0f, 1.0f, 0.0f);
 
@@ -101,12 +163,14 @@ public class FishEye180Rectangle {
         if(out == null){
             try{
                 OneFisheye360Param outParam = new OneFisheye360Param();
-                Log.w(TAG, "OneFishEye360Param YUVFrame width&height : " + width + "  " + height);
+                Log.w(TAG, "UVFrame width&height : " + width + "  " + height);
+                //int rect = width > height ? height : width;
                 int ret = FishEyeProc.getOneFisheye360Param(frame.getYuvbyte(), width, height, outParam);
                 if (ret != 0) {
                     return;
                 }
-                out = FishEyeProc.oneFisheye180RectangleFunc(100, 0.6f, outParam);
+                Log.w(TAG, "OneFishEye360Param width&height : " + outParam.width + "  " + outParam.height);
+                out = FishEyeProc.oneFisheye180RectangleFunc(100, cutPercent, radioPercent, rangeAngle, outParam);
 
             }catch ( Exception e){
                 e.printStackTrace();
@@ -180,7 +244,7 @@ public class FishEye180Rectangle {
         return true;
     }
 
-    public void setAttributeStatus() {
+    private void setAttributeStatus() {
         if(shader == null) return ;
         GLES20.glUseProgram( shader.getShaderProgramId() );
         float kColorConversion420[] = {
@@ -201,8 +265,9 @@ public class FishEye180Rectangle {
 
     }
 
-    public void draw(){
+    private void draw(){
         if(shader == null) return ;
+
         GLES20.glUseProgram(shader.getShaderProgramId());
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         //将最终变换矩阵写入
@@ -218,7 +283,7 @@ public class FishEye180Rectangle {
     public void onDrawFrame(YUVFrame frame) {
         if(!isInitialized) return;
 
-        GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+        GLES20.glViewport(0,0, mSurfaceWidth,mSurfaceHeight);
         GLES20.glClearColor(0.0f,0.0f,0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
@@ -235,13 +300,12 @@ public class FishEye180Rectangle {
 
     public void onDrawPreviewPic() {
         if(!isInitialized) return;
-
-        GLES20.glViewport(0,0,mSurfaceWidth,mSurfaceHeight);
+        GLES20.glViewport(0,0, mSurfaceWidth,mSurfaceHeight);
         GLES20.glClearColor(0.0f,0.0f,0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
+        GLES20.glCullFace(GLES20.GL_BACK);
 
         GLES20.glUniform1i(shader.uLocationImageMode, 1);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -265,7 +329,7 @@ public class FishEye180Rectangle {
     private float[] mMatrixFingerRotationX = new float[16];
     private float[] mMatrixFingerRotationY = new float[16];
     private float[] mMatrixFingerRotationZ = new float[16];
-    public void resetMatrixStatus(){
+    private void resetMatrixStatus(){
         mfingerRotationX = 0;
         mfingerRotationY = 0;
         mfingerRotationZ = 0;
@@ -291,8 +355,12 @@ public class FishEye180Rectangle {
         Log.w(TAG, "PAVED handleTouchMove offsetX : "+offsetX);
         Log.w(TAG, "PAVED handleTouchMove offsetY : "+offsetY);
         float normalizeX = offsetX / mSurfaceWidth;
+        float normalizeY = offsetY / mSurfaceHeight;
         eye.cx += normalizeX;
         eye.tx += normalizeX;
+
+        eye.cy -= normalizeY/2;
+        eye.ty -= normalizeY/2;
         Matrix.setLookAtM(this.mViewMatrix, 0,
                 eye.cx, eye.cy, eye.cz,      //摄像机位置
                 eye.tx, eye.ty, eye.tz,      //摄像机目标视点
@@ -348,9 +416,6 @@ public class FishEye180Rectangle {
     }
 
     private void updateMatrix() {
-        Matrix.setIdentityM(this.mModelMatrix, 0);
-        Matrix.scaleM(this.mModelMatrix,0,1.0f,1.0f,1.0f);
-
         Matrix.setIdentityM(this.mMatrixFingerRotationX, 0);
         Matrix.setIdentityM(this.mMatrixFingerRotationY, 0);
         Matrix.rotateM(this.mMatrixFingerRotationY, 0, this.mfingerRotationX, 0, 1, 0);

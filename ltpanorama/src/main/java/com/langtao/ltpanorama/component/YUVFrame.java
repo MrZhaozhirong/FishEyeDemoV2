@@ -125,12 +125,4 @@ public class YUVFrame implements Cloneable {
         return ret;
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        YUVFrame clone = (YUVFrame) super.clone();
-        clone.setYDataBuffer(this.getYDataBuffer().array());
-        clone.setUDataBuffer(this.getUDataBuffer().array());
-        clone.setVDataBuffer(this.getVDataBuffer().array());
-        return clone;
-    }
 }
